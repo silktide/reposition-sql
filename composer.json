@@ -1,0 +1,37 @@
+{
+  "name": "silktide/reposition-sql",
+  "description": "SQL module for silktide/reposition",
+  "license": "MIT",
+  "homepage": "https://github.com/silktide/reposition-sql",
+  "repositories": [
+      {
+          "type": "vcs",
+          "url": "https://github.com/downsider/reposition"
+      }
+
+  ],
+  "require": {
+    "php": ">=5.5.0",
+    "silktide/reposition": "~0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "4.*",
+    "mockery/mockery": "0.9.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Silktide\\Reposition\\Sql": "src",
+      "Silktide\\Reposition\\Sql\\Test\\": "test"
+    }
+  },
+  "suggest": {
+    "downsider/puzzle-di": "Auto configured dependency injection for modules"
+  },
+  "extra": {
+    "downsider-puzzle-di": {
+      "silktide/syringe": {
+        "path": "config/syringe.json"
+      }
+    }
+  }
+}
