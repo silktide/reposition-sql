@@ -1,15 +1,8 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Danny
- * Date: 28/06/15
- * Time: 19:47
- */
 
 namespace Silktide\Reposition\Sql\Normaliser;
 
-
-use Silktide\Reposition\Exception\NormalisationException;
+use Silktide\Reposition\Sql\Exception\NormalisationException;
 use Silktide\Reposition\Normaliser\NormaliserInterface;
 
 class SqlNormaliser implements NormaliserInterface
