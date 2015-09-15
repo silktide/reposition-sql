@@ -3,7 +3,6 @@
 namespace Silktide\Reposition\Sql\Storage;
 
 
-use Silktide\Reposition\Sql\Adapter\PdoAdapter;
 use Silktide\Reposition\Hydrator\HydratorInterface;
 use Silktide\Reposition\Normaliser\NormaliserInterface;
 use Silktide\Reposition\Query\Query;

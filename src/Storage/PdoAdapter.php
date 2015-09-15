@@ -1,6 +1,6 @@
 <?php
 
-namespace Silktide\Reposition\Sql\Adapter;
+namespace Silktide\Reposition\Sql\Storage;
 
 class PdoAdapter extends \PDO
 {
