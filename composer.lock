@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "14acdd5779d0f2785a048276e06a5108",
+    "hash": "fad458d2594999fd75720df11af795d1",
     "packages": [
         {
             "name": "silktide/reposition",
-            "version": "0.1.1",
+            "version": "1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/downsider/reposition.git",
-                "reference": "e738edb78e93449433e3fb41c6e52139d6e84760"
+                "reference": "68d4c75570faad15b3f47faaa15de56da8df39da"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/downsider/reposition/zipball/e738edb78e93449433e3fb41c6e52139d6e84760",
-                "reference": "e738edb78e93449433e3fb41c6e52139d6e84760",
+                "url": "https://api.github.com/repos/downsider/reposition/zipball/68d4c75570faad15b3f47faaa15de56da8df39da",
+                "reference": "68d4c75570faad15b3f47faaa15de56da8df39da",
                 "shasum": ""
             },
             "require": {
@@ -50,9 +50,9 @@
             "description": "A modular database abstraction system",
             "homepage": "https://github.com/silktide/reposition",
             "support": {
-                "source": "https://github.com/downsider/reposition/tree/0.1.1"
+                "source": "https://github.com/downsider/reposition/tree/1.0.0"
             },
-            "time": "2015-02-18 17:29:15"
+            "time": "2015-09-14 22:34:21"
         }
     ],
     "packages-dev": [
