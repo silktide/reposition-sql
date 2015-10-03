@@ -12,7 +12,7 @@
   ],
   "require": {
     "php": ">=5.5.0",
-    "silktide/reposition": "~1"
+    "silktide/reposition": "dev-develop"
   },
   "require-dev": {
     "phpunit/phpunit": "4.*",
@@ -20,7 +20,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Silktide\\Reposition\\Sql": "src",
+      "Silktide\\Reposition\\Sql\\": "src",
       "Silktide\\Reposition\\Sql\\Test\\": "test"
     }
   },
