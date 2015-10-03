@@ -1,0 +1,243 @@
+parameters:
+    sqlStatementDefinition:
+        find:
+            -
+                type: function
+                optional: true
+                multiple: true
+            -
+                type: join
+                optional: true
+                multiple: true
+            -
+                type: where
+                optional: true
+            -
+                type: group
+                optional: true
+            -
+                type: sort
+                optional: true
+            -
+                type: limit
+                optional: true
+
+        save:
+            -
+                name: entity
+                multiple: true
+
+        delete:
+            -
+                type: join
+                optional: true
+                multiple: true
+            -
+                type: where
+                optional: true
+            -
+                type: sort
+                optional: true
+            -
+                type: limit
+                optional: true
+
+        update:
+            -
+                type: expression
+                multiple: true
+            -
+                type: where
+                optional: true
+            -
+                type: sort
+                optional: true
+            -
+                type: limit
+                optional: true
+
+        function:
+            -
+                name: function
+            -
+                name: open
+            -
+                type: expression
+                optional: true
+                multiple: true
+            -
+                name: close
+
+        join:
+            -
+                any:
+                    type:
+                        - full-outer
+                    name:
+                        - left
+                        - right
+                        - inner
+            -
+                name: join
+            -
+                name: collection
+            -
+                name: on
+            -
+                name: open
+            -
+                type: condtion
+            -
+                type: logic-condition
+                optional: true
+                multiple: true
+            -
+                name: close
+
+        full-outer:
+            -
+                name: full
+            -
+                name: outer
+
+        where:
+            -
+                name: where
+            -
+                type: condtion
+            -
+                type: logic-condition
+                optional: true
+                multiple: true
+
+        condition:
+            -
+                name: notL
+                optional: true
+            -
+                name: open
+                optional: true
+            -
+                any:
+                    type:
+                        - condition
+                        - function
+                        - value
+                    name:
+                        - field
+            -
+                any:
+                    type:
+                        - operator-expression
+                        - between-expression
+                optional: true
+            -
+                name: close
+                optional: true
+
+        expression:
+            -
+                name: open
+                optional: true
+            -
+                type: operand
+            -
+                type:  operator-expression
+                optional: true
+            -
+                name: close
+                optional: true
+
+        logic-condition:
+            -
+                type: logic-operator
+            -
+                type: condition
+
+        operator-expression:
+            -
+                name: operator
+            -
+                type: operand
+            -
+                type: operator-expression
+                optional: true
+
+        between-expression:
+            -
+                name: operator
+                value: between
+            -
+                type: operand
+            -
+                name: andL
+            -
+                type: operand
+
+        operand:
+            -
+                any:
+                    type:
+                        - expression
+                        - function
+                        - value
+                    name:
+                        - field
+
+        value:
+            -
+                any:
+                    name:
+                        - string
+                        - int
+                        - float
+                        - bool
+                        - null
+
+        logic-operator:
+            -
+                any:
+                    name:
+                        - andL
+                        - orL
+
+        group:
+            -
+                name: group
+            -
+                name: field
+                multiple: true
+
+        sort:
+            -
+                name: sort
+            -
+                type: sort-reference
+                multiple: true
+
+        sort-reference:
+            -
+                any:
+                    type:
+                        - expression
+                    name:
+                        - field
+            -
+                name: sort-direction
+                optional: true
+
+        limit:
+            -
+                name: limit
+            -
+                name: int
+            -
+                type: offset
+                optional: true
+
+        offset:
+            -
+                name: offset
+                optional: true
+            -
+                name: int
