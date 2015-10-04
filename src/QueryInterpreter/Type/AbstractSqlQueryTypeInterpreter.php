@@ -32,6 +32,14 @@ abstract class AbstractSqlQueryTypeInterpreter
 
     protected $values = [];
 
+    /**
+     * @return string
+     */
+    abstract public function supportedQueryType();
+
+    /**
+     * @param EntityMetadataProviderInterface $provider
+     */
     public function setEntityMetadataProvider(EntityMetadataProviderInterface $provider)
     {
         $this->entityMetadataProvider = $provider;
@@ -51,6 +59,11 @@ abstract class AbstractSqlQueryTypeInterpreter
     }
 
     abstract public function interpretQuery(TokenSequencerInterface $query);
+
+    public function getValues()
+    {
+        return $this->values;
+    }
 
     /**
      * @param Token $token

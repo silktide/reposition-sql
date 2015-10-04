@@ -3,13 +3,17 @@
 namespace Silktide\Reposition\Sql\QueryInterpreter\Type;
 
 use Silktide\Reposition\Exception\QueryException;
-use Silktide\Reposition\Metadata\EntityMetadata;
 use Silktide\Reposition\QueryBuilder\QueryToken\Entity;
 use Silktide\Reposition\QueryBuilder\QueryToken\Value;
 use Silktide\Reposition\QueryBuilder\TokenSequencerInterface;
 
 class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 {
+
+    public function supportedQueryType()
+    {
+        return TokenSequencerInterface::TYPE_FIND;
+    }
 
     public function interpretQuery(TokenSequencerInterface $query)
     {
