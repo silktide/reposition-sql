@@ -2,86 +2,121 @@
 
 namespace Silktide\Reposition\Sql\QueryInterpreter;
 
+use Silktide\Reposition\Exception\QueryException;
+use Silktide\Reposition\Exception\InterpretationException;
+use Silktide\Reposition\Metadata\EntityMetadataProviderInterface;
 use Silktide\Reposition\Normaliser\NormaliserInterface;
-use Silktide\Reposition\Query\DeleteQuery;
-use Silktide\Reposition\Query\FindQuery;
-use Silktide\Reposition\Query\InsertQuery;
-use Silktide\Reposition\Query\Query;
-use Silktide\Reposition\Query\UpdateQuery;
+use Silktide\Reposition\QueryBuilder\TokenSequencerInterface;
+use Silktide\Reposition\QueryBuilder\TokenParser;
+use Silktide\Reposition\QueryBuilder\QueryToken\Token;
+use Silktide\Reposition\QueryBuilder\QueryToken\Value;
+use Silktide\Reposition\QueryBuilder\QueryToken\Reference;
+use Silktide\Reposition\QueryBuilder\QueryToken\Entity;
 use Silktide\Reposition\QueryInterpreter\CompiledQuery;
 use Silktide\Reposition\QueryInterpreter\QueryInterpreterInterface;
+use Silktide\Reposition\Sql\QueryInterpreter\Type\AbstractSqlQueryTypeInterpreter;
 
 class SqlQueryInterpreter implements QueryInterpreterInterface
 {
 
-    protected $normaliser;
     /**
-     * @param Query $query
-     * @return CompiledQuery
+     * @var NormaliserInterface
      */
-    public function interpret(Query $query)
+    protected $normaliser;
+
+    /**
+     * @var EntityMetadataProviderInterface
+     */
+    protected $metadataProvider;
+
+    /**
+     * @var TokenParser
+     */
+    protected $tokenParser;
+
+    /**
+     * @var array
+     */
+    protected $queryTypeInterpreters;
+
+    protected $fields = [];
+
+    /**
+     * Switch between PDO style substitution and mysqli escaping
+     *
+     * @var bool
+     */
+    protected $useSubstitution = true;
+
+    public function __construct(TokenParser $parser, array $queryTypeInterpreters)
     {
-        switch ($query->getAction()) {
-            case Query::ACTION_FIND:
-                /** @var FindQuery $query */
-                return $this->compileFindQuery($query);
-            case Query::ACTION_INSERT:
-                /** @var InsertQuery $query */
-                return $this->compileInsertQuery($query);
-            case Query::ACTION_UPDATE:
-                /** @var UpdateQuery $query */
-                return $this->compileUpdateQuery($query);
-            case Query::ACTION_DELETE:
-                /** @var DeleteQuery $query */
-                return $this->compileDeleteQuery($query);
-            default:
-                throw new QueryException("Invalid query action: {$query->getAction()}");
-        }
-    }
-
-    protected function compileFindQuery(FindQuery $query)
-    {
-        $compiled = new CompiledQuery($query->getTable());
-
-
-        // TODO: all the field names need preparing
-        $fields = $query->getFields();
-        foreach ($fields as $alias => $field) {
-            if (is_string($alias)) {
-                $fields[$alias] = "$field AS $alias";
-            }
-        }
-
-
-        $conditions = $query->getFilters();
-
-        $sql = "SELECT ";
-
-
-        return $compiled;
-    }
-
-    protected function compileInsertQuery(InsertQuery $query)
-    {
-
-    }
-
-    protected function compileUpdateQuery(UpdateQuery $query)
-    {
-
-    }
-
-    protected function compileDeleteQuery(DeleteQuery $query)
-    {
-
+        $this->tokenParser = $parser;
+        $this->setQueryTypeInterpreters($queryTypeInterpreters);
     }
 
     /**
-     * @param NormaliserInterface $normaliser
+     * {@inheritDoc}
      */
     public function setNormaliser(NormaliserInterface $normaliser)
     {
         $this->normaliser = $normaliser;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setEntityMetadataProvider(EntityMetadataProviderInterface $provider)
+    {
+        $this->metadataProvider = $provider;
+    }
+
+    public function setQueryTypeInterpreters(array $interpreters)
+    {
+        $this->queryTypeInterpreters = [];
+        foreach ($interpreters as $interpreter) {
+            if ($interpreter instanceof AbstractSqlQueryTypeInterpreter) {
+                $this->addQueryTypeInterpreter($interpreter);
+            }
+        }
+    }
+
+    public function addQueryTypeInterpreter(AbstractSqlQueryTypeInterpreter $interpreter)
+    {
+        $this->queryTypeInterpreters[] = $interpreter;
+    }
+
+    /**
+     * @param TokenSequencerInterface $query
+     *
+     * @throws InterpretationException
+     * @return CompiledQuery
+     */
+    public function interpret(TokenSequencerInterface $query)
+    {
+        if (empty($this->metadataProvider)) {
+            throw new InterpretationException("Cannot interpret any queries without an Entity Metadata Provider");
+        }
+
+        $this->tokenParser->parseTokenSequence($query);
+
+        // select interpreter
+        $interpreter = null;
+        $queryType = $query->getType();
+        foreach ($this->queryTypeInterpreters as $interpreter) {
+            /** @var AbstractSqlQueryTypeInterpreter $interpreter */
+            if ($interpreter->supportedQueryType() == $queryType) {
+                break;
+            }
+        }
+        if (empty($interpreter)) {
+            throw new InterpretationException("Cannot interpret query. The query type '$queryType' is not supported by any of the installed QueryTypeInterpreters");
+        }
+
+        $compiledQuery = new CompiledQuery();
+        $compiledQuery->setQuery($interpreter->interpretQuery($query));
+        $compiledQuery->setArguments($interpreter->getValues());
+
+        return $compiledQuery;
     }
 
 } 
