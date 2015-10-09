@@ -4,9 +4,8 @@ namespace Silktide\Reposition\Sql\Storage;
 
 
 use Silktide\Reposition\Hydrator\HydratorInterface;
+use Silktide\Reposition\Metadata\EntityMetadataProviderInterface;
 use Silktide\Reposition\Normaliser\NormaliserInterface;
-use Silktide\Reposition\Query\Query;
-use Silktide\Reposition\QueryBuilder\QueryBuilderInterface;
 use Silktide\Reposition\QueryBuilder\TokenSequencerInterface;
 use Silktide\Reposition\Sql\QueryInterpreter\SqlQueryInterpreter;
 use Silktide\Reposition\Storage\StorageInterface;
@@ -15,23 +14,25 @@ class SqlStorage implements StorageInterface
 {
 
     protected $database;
-    protected $builder;
     protected $interpreter;
+    protected $entityMetadataProvider;
     protected $hydrator;
 
     protected $parameters = [];
 
     public function __construct(
         PdoAdapter $database,
-        QueryBuilderInterface $builder,
         SqlQueryInterpreter $interpreter,
+        EntityMetadataProviderInterface $entityMetadataProvider,
         HydratorInterface $hydrator = null,
         NormaliserInterface $normaliser = null
     ) {
         $this->database = $database;
-        $this->builder = $builder;
         $this->interpreter = $interpreter;
+        $this->entityMetadataProvider = $entityMetadataProvider;
         $this->hydrator = $hydrator;
+
+        $this->interpreter->setEntityMetadataProvider($this->entityMetadataProvider);
 
         if (!empty($normaliser)) {
             $this->interpreter->setNormaliser($normaliser);
@@ -40,14 +41,6 @@ class SqlStorage implements StorageInterface
             }
         }
 
-    }
-
-    /**
-     * @return QueryBuilderInterface
-     */
-    public function getQueryBuilder()
-    {
-        return $this->builder;
     }
 
     /**
@@ -63,7 +56,11 @@ class SqlStorage implements StorageInterface
         $statement->execute($compiledQuery->getArguments());
         $data = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
-
+        $options = [
+            "metadataProvider" => $this->entityMetadataProvider,
+            "entityMap" => $query->getIncludes(),
+            "entity" => $entityClass
+        ];
 
         if ($this->hydrator instanceof HydratorInterface && !empty($entityClass)) {
             $response = $this->hydrator->hydrateAll($data, $entityClass);
