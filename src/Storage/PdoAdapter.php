@@ -29,8 +29,8 @@ class PdoAdapter extends \PDO
     public function prepareLabel($label)
     {
         $label = str_replace(
-            array("\x00", "\n", "\r", "\\", "\'", "\"", "\x1a"),
-            array("\\\x00", "\\\n", "\\\r", "\\\\", "\\\'", "\\\"", "\\\x1a"),
+            array("\x00", "\n", "\r", "\\", "'", "\"", "\x1a", "`"),
+            array("\\\x00", "\\\n", "\\\r", "\\\\", "\\'", "\\\"", "\\\x1a", "\\`"),
             $label
         );
         return $label;
