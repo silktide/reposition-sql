@@ -63,7 +63,7 @@ class SqlStorage implements StorageInterface
         ];
 
         if ($this->hydrator instanceof HydratorInterface && !empty($entityClass)) {
-            $response = $this->hydrator->hydrateAll($data, $entityClass);
+            $response = $this->hydrator->hydrateAll($data, $entityClass, $options);
         } else  {
             $response = $data;
         }
