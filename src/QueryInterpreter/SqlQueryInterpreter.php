@@ -100,21 +100,22 @@ class SqlQueryInterpreter implements QueryInterpreterInterface
         $this->tokenParser->parseTokenSequence($query);
 
         // select interpreter
-        $interpreter = null;
+        $selectedInterpreter = null;
         $queryType = $query->getType();
         foreach ($this->queryTypeInterpreters as $interpreter) {
             /** @var AbstractSqlQueryTypeInterpreter $interpreter */
             if ($interpreter->supportedQueryType() == $queryType) {
+                $selectedInterpreter = $interpreter;
                 break;
             }
         }
-        if (empty($interpreter)) {
+        if (empty($selectedInterpreter)) {
             throw new InterpretationException("Cannot interpret query. The query type '$queryType' is not supported by any of the installed QueryTypeInterpreters");
         }
 
         $compiledQuery = new CompiledQuery();
-        $compiledQuery->setQuery($interpreter->interpretQuery($query));
-        $compiledQuery->setArguments($interpreter->getValues());
+        $compiledQuery->setQuery($selectedInterpreter->interpretQuery($query));
+        $compiledQuery->setArguments($selectedInterpreter->getValues());
 
         return $compiledQuery;
     }
