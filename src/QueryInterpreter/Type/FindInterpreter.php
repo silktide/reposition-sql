@@ -2,7 +2,7 @@
 
 namespace Silktide\Reposition\Sql\QueryInterpreter\Type;
 
-use Silktide\Reposition\Exception\QueryException;
+use Silktide\Reposition\Exception\InterpretationException;
 use Silktide\Reposition\QueryBuilder\QueryToken\Entity;
 use Silktide\Reposition\QueryBuilder\QueryToken\Token;
 use Silktide\Reposition\QueryBuilder\QueryToken\Value;
@@ -20,7 +20,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
     public function interpretQuery(TokenSequencerInterface $query)
     {
         if (empty($this->entityMetadataProvider)) {
-            throw new QueryException("Cannot interpret this 'find' query without an EntityMetadataProvider");
+            throw new InterpretationException("Cannot interpret this 'find' query without an EntityMetadataProvider");
         }
 
         $this->query = $query;
@@ -47,8 +47,6 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 
             $token = $query->getNextToken();
         }
-
-
 
         // if we had no aggregate functions in the sequence, then this is a standard select query
         // so, we need to get the fields to return from the entity metadata for each
@@ -85,13 +83,10 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 
             } while (list($collectionAlias, $entity) = each($includes));
 
-        } else {
-            // if we have aggregate functions to return, includes don't make any sense
-            $includes = [];
         }
 
         if (empty($this->fields)) {
-            throw new QueryException("Cannot interpret find query, there are no fields to return");
+            throw new InterpretationException("Cannot interpret find query, there are no fields to return");
         }
 
         // if this query has more than one include, it's more complex and requires separate processing
@@ -143,12 +138,12 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
      */
     protected function renderIncludeQuery(Token $token)
     {
-        $includes = $this->query->getIncludes();
-        foreach ($includes as $alias => $entity) {
+        $collections = $this->query->getIncludes();
+        foreach ($collections as $alias => $entity) {
             if ($alias == $entity) {
-                unset($includes[$alias]);
+                unset($collections[$alias]);
                 $alias =  $this->getEntityMetadata($entity)->getCollection();
-                $includes[$alias] = $entity;
+                $collections[$alias] = $entity;
             }
         }
 
@@ -163,17 +158,19 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 
         // parse the tokens for join conditions
         $joinConditions = [];
-        $includeMap = [];
+        $joinMap = [];
 
         while (!empty($token) && !in_array($token->getType(), ["group", "sort", "limit"])) {
             $subqueryTemplateSql .= " " . $this->renderToken($token);
             if ($token->getType() == "join") {
                 /** @var Reference $ref */
                 $ref = $this->query->getNextToken();
-                $collection = $this->getReferenceAlias($ref);;
+                $alias = $this->getReferenceAlias($ref);;
                 $subqueryTemplateSql .= " " . $this->renderToken($ref);
                 $subqueryTemplateSql .= " " . $this->renderToken($this->query->getNextToken()); // ON
                 $subqueryTemplateSql .= " " . $this->renderToken($this->query->getNextToken()); // (
+
+                // write the join condition to a separate array, so we can replace it into the SQL when appropriate
                 $level = 1; // counter to keep track of how deep we go into any closures
                 $joinCondition = "";
                 $joinCollectionsFound = [];
@@ -184,11 +181,10 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
                     switch ($type) {
                         case "field":
                             /** @var Reference $token */
-                            $refParts = explode(".", $token->getValue());
-                            $partCount = count($refParts);
-                            if ($partCount > 1) {
-                                // capture the 2nd to last element e.g. the collection name
-                                $joinCollectionsFound[] = $refParts[$partCount - 2];
+                            // save the collection from this reference
+                            $collection = $this->getCollectionFromReference($token);
+                            if (!empty($collection)) {
+                                $joinCollectionsFound[] = $collection;
                             }
                             break;
                         case "open":
@@ -203,65 +199,39 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 
                 // if we found enough collections, create a mapping between them
                 if (count($joinCollectionsFound) > 1) {
-                    $colOne = $joinCollectionsFound[0];
-                    $colTwo = $joinCollectionsFound[1];
-
-                    // first one way ...
-                    if (empty($includeMap[$colOne])) {
-                        $includeMap[$colOne] = [];
-                    }
-                    $includeMap[$colOne][] = $colTwo;
-
-                    // ... then the other
-                    if (empty($includeMap[$colTwo])) {
-                        $includeMap[$colTwo] = [];
-                    }
-                    $includeMap[$colTwo][] = $colOne;
-
-                    // if either are missing from the includes array, add them now (with no entity)
-                    if (!isset($includes[$colOne]) && $colOne != $mainCollection) {
-                        $includes[$colOne] = "";
-                    }
-                    if (!isset($includes[$colTwo]) && $colTwo != $mainCollection) {
-                        $includes[$colTwo] = "";
-                    }
+                    $this->mapJoins($joinCollectionsFound, $joinMap, $collections);
                 }
 
-                $joinConditions[$collection] = $joinCondition;
-                $subqueryTemplateSql .= "%{$collection}Condition%";
+                // save the join condition and write a placeholder to the template SQL
+                $joinConditions[$alias] = $joinCondition;
+                $subqueryTemplateSql .= "%{$alias}Condition%";
+
                 $subqueryTemplateSql .= $this->renderToken($token); // )
             }
 
             $token = $this->query->getNextToken();
         };
 
-        // add target entity to the include array
-        $includes = array_merge([$mainCollection => $mainEntity], $includes);
+        // add target entity to the collections array (as the first element to make sorting easier later)
+        unset($collections[$mainCollection]);
+        $collections = array_merge([$mainCollection => $mainEntity], $collections);
+
+        $primaryKeys = $this->getPrimaryKeys($collections);
 
         // recursively construct the join tree
-        $joinTree = $this->constructJoinTree($includeMap, $mainCollection);
+        $joinTree = $this->constructJoinTree($joinMap, $mainCollection);
         // recursively parse the tree into join lists
         $joinLists = [];
         $this->parseJoinTree($joinLists, $joinTree);
 
-        // get primary keys
-        $primaryKeys = [];
-        foreach ($includes as $alias => $entity) {
-            if (empty($entity)) {
-                $primaryKeys[$alias] = "id";
-                continue;
-            }
-            $metadata = $this->getEntityMetadata($entity);
-            $primaryKeys[$alias] = $metadata->getPrimaryKey();
-        }
-
+        // create the SQL for each subquery
         $subqueries = [];
         foreach ($joinLists as $collectionList) {
             $templateJoinConditions = $joinConditions;
             $replacements = [];
             foreach ($templateJoinConditions as $collection => $condition) {
                 // if this is a collection that were including and that isn't in the collection list, set it's join condition to "[primary key] = NULL"
-                if (isset($includes[$collection]) && !in_array($collection, $collectionList)) {
+                if (isset($collections[$collection]) && !in_array($collection, $collectionList)) {
                     $condition = $this->renderArbitraryReference($collection . "." . $primaryKeys[$collection]) . " IS NULL";
                 }
                 $replacements["%{$collection}Condition%"] = $condition;
@@ -271,48 +241,65 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 
         $sql = "SELECT * FROM (" . implode(" UNION ", $subqueries) . ") s";
 
-        // parse order by, taking any field related to the main collection, plus the first field from the included collections, wrapped in an IFNULL()
-        $sort = [];
-        do {
-            if (!empty($token) && $token->getType() == 'sort') {
-                $appendDirection = false;
-                while(($token = $this->query->getNextToken()) && $token->getType() != 'limit') {
-                    /** @var Reference $token */
-                    if ($token->getType() == "field" && strpos($token->getValue(), $mainCollection . ".") !== false) {
-                        $sort[] = $this->renderArbitraryReference($this->getSelectFieldAlias($token->getValue()));
-                        $appendDirection = true;
-                    } elseif ($token->getType() == "sort-direction" && $appendDirection) {
-                        // append the sort direction to the last sort field we processed
-                        $sort[count($sort) - 1] .= " " . $this->renderToken($token);
-                        $appendDirection = false;
-                    } else {
-                        $appendDirection = false;
-                    }
-                }
-            }
-        } while (!empty($token) && $token->getType() != 'limit' && ($token = $this->query->getNextToken()));
+        $sort = $this->processSortFields($token, $collections, $mainCollection, $primaryKeys);
 
         if (!empty($sort)) {
-            // if main collection sort fields were found, don't add it's PK to the list in the next step
-            $includes[$mainCollection] = "";
+            // shouldn't be possible to not have any sort fields, but hey!
+            $sql .= " ORDER BY " . implode(", ", $sort);
         }
-
-        foreach ($includes as $alias => $entity) {
-            if (empty($entity)) {
-                continue;
-            }
-            $sort[] = "IFNULL(" . $this->renderArbitraryReference($this->getSelectFieldAlias($alias. "." . $primaryKeys[$alias])) . ", :largest_value)";
-            $this->values["largest_value"] = 4294967295;
-        }
-
-        $sql .= " ORDER BY " . implode(", ", $sort);
 
         return $sql;
+    }
+
+    protected function getCollectionFromReference(Reference $ref) {
+        $refParts = explode(".", $ref->getValue());
+        $partCount = count($refParts);
+        if ($partCount > 1) {
+            // always use the 2nd from last element, so 'database.table.field' and 'table.field' will both return 'table';
+            return $refParts[$partCount - 2];
+        }
+        return null;
     }
 
     protected function getReferenceAlias(Reference $ref)
     {
         return empty($ref->getAlias())? $ref->getValue(): $ref->getAlias();
+    }
+
+    protected function getPrimaryKeys(array $collections)
+    {
+        $primaryKeys = [];
+        foreach ($collections as $alias => $entity) {
+            if (empty($entity)) {
+                $primaryKeys[$alias] = "id";
+                continue;
+            }
+            $metadata = $this->getEntityMetadata($entity);
+            $primaryKeys[$alias] = $metadata->getPrimaryKey();
+        }
+        return $primaryKeys;
+    }
+
+    protected function mapJoins($collectionsFound, array &$joinMap, array &$collections)
+    {
+        // create from and to mappings for each collection
+        $toMap = [
+            $collectionsFound[0] => $collectionsFound[1],
+            $collectionsFound[1] => $collectionsFound[0],
+        ];
+
+        foreach ($toMap as $from => $to) {
+            // create the mapping
+            if (empty($joinMap[$from])) {
+                $joinMap[$from] = [];
+            }
+            $joinMap[$from][] = $to;
+
+            // if 'from' is missing from the collections array, add it now
+            if (!isset($collections[$from])) {
+                $collections[$from] = "";
+            }
+        }
     }
 
     protected function constructJoinTree(&$includeMap, $collection)
@@ -347,6 +334,45 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
                 $joinLists[] = $thisBranch;
             }
         }
+    }
+
+    protected function processSortFields($token, array $collections, $mainCollection, array $primaryKeys)
+    {
+        // parse order by, taking any field related to the main collection, plus the first field from the included collections, wrapped in an IFNULL()
+        $sort = [];
+        do {
+            if (!empty($token) && $token->getType() == 'sort') {
+                $appendDirection = false;
+                while(($token = $this->query->getNextToken()) && $token->getType() != 'limit') {
+                    /** @var Reference $token */
+                    if ($token->getType() == "field" && $this->getCollectionFromReference($token) == $mainCollection) {
+                        $sort[] = $this->renderArbitraryReference($this->getSelectFieldAlias($token->getValue()));
+                        $appendDirection = true;
+                    } elseif ($token->getType() == "sort-direction" && $appendDirection) {
+                        // append the sort direction to the last sort field we processed
+                        $sort[count($sort) - 1] .= " " . $this->renderToken($token);
+                        $appendDirection = false;
+                    } else {
+                        $appendDirection = false;
+                    }
+                }
+            }
+        } while (!empty($token) && $token->getType() != 'limit' && ($token = $this->query->getNextToken()));
+
+        $mainCollectionSortFieldsExist = false;
+        if (!empty($sort)) {
+            // if main collection sort fields were found, don't add it's PK to the list in the next step
+            $mainCollectionSortFieldsExist = true;
+        }
+
+        foreach ($collections as $alias => $entity) {
+            if (empty($entity) || ($alias == $mainCollection && $mainCollectionSortFieldsExist)) {
+                continue;
+            }
+            $sort[] = "IFNULL(" . $this->renderArbitraryReference($this->getSelectFieldAlias($alias. "." . $primaryKeys[$alias])) . ", :largest_value)";
+            $this->values["largest_value"] = 4294967295;
+        }
+        return $sort;
     }
 
     /**
