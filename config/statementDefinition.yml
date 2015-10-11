@@ -170,7 +170,7 @@ parameters:
             -
                 type: operand
             -
-                name: andL
+                name: and
             -
                 type: operand
 
@@ -198,8 +198,8 @@ parameters:
             -
                 any:
                     name:
-                        - andL
-                        - orL
+                        - and
+                        - or
 
         group:
             -
