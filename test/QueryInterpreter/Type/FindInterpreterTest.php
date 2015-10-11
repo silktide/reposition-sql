@@ -10,16 +10,6 @@ use Silktide\Reposition\Metadata\EntityMetadataProviderInterface;
 class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
 
     /**
-     * @var EntityMetadataProviderInterface
-     */
-    protected $metadataProvider;
-
-    public function setUp()
-    {
-        $this->metadataProvider = \Mockery::mock("Silktide\\Reposition\\Metadata\\EntityMetadataProviderInterface");
-    }
-
-    /**
      * @dataProvider simpleTokenSequenceProvider
      *
      * @param array $tokens
@@ -32,17 +22,14 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
         $metadataConfig = [[
             "class" => $entityClass,
             "collection" => "table_name",
-            "fields" => ["string_field", "int_field", "bool_field"],
-            "dontInclude" => true
+            "fields" => ["string_field", "int_field", "bool_field"]
         ]];
 
-        $this->configureMetadataProvider($metadataConfig);
+        $includes = $this->configureMetadataProvider($metadataConfig);
 
-        $tokenSequencer = $this->createMockTokenSequencer($tokens, $entityClass);
+        $tokenSequencer = $this->createMockTokenSequencer($tokens, array_pop($includes));
 
-        /** @var EntityMetadataProviderInterface  $metadataProvider */
         $interpreter = new FindInterpreter();
-        $interpreter->setEntityMetadataProvider($this->metadataProvider);
 
         /** @var TokenSequencerInterface $tokenSequencer */
         $this->assertEquals($expectedSql, $interpreter->interpretQuery($tokenSequencer));
@@ -50,33 +37,26 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
 
     protected function configureMetadataProvider(array $metadataConfig)
     {
-        $metadataMap = [];
         $includes = [];
         foreach ($metadataConfig as $alias => $config) {
-            $entityClass = $config["class"];
+            $entity = $config["class"];
             $collection = empty($config["collection"])? $alias: $config["collection"];
             $fields = $config["fields"];
             $primaryKey = empty($config["pk"])? "id": $config["pk"];
 
             $metadata = \Mockery::mock("Silktide\\Reposition\\Metadata\\EntityMetadata");
+            $metadata->shouldReceive("getEntity")->andReturn($entity);
             $metadata->shouldReceive("getCollection")->andReturn($collection);
             $metadata->shouldReceive("getFieldNames")->andReturn($fields);
             $metadata->shouldReceive("getPrimaryKey")->andReturn($primaryKey);
-            $metadataMap[$entityClass] = $metadata;
-            if (empty($config["dontInclude"])) {
-                $includes[$alias] = $entityClass;
-            }
+            $metadata->shouldReceive("getFieldType")->andReturn("int");
+            $includes[$alias] = $metadata;
         }
-        $this->metadataProvider->shouldReceive("getEntityMetadata")->andReturnUsing(function($entity) use ($metadataMap) {
-            if (empty($metadataMap[$entity])) {
-                throw new MetadataException("Test: Could not find metadata for the entity '$entity'");
-            }
-            return $metadataMap[$entity];
-        });
+
         return $includes;
     }
 
-    protected function createMockTokenSequencer(array $tokens, $entityClass, array $includes = [])
+    protected function createMockTokenSequencer(array $tokens, $metadataMock, array $includes = [])
     {
         $sequence = [];
         foreach ($tokens as $tokenArgs) {
@@ -97,7 +77,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
 
         $tokenSequencer = \Mockery::mock("Silktide\\Reposition\\QueryBuilder\\TokenSequencerInterface");
         $tokenSequencer->shouldReceive("getNextToken")->andReturnValues($sequence);
-        $tokenSequencer->shouldReceive("getEntityName")->andReturn($entityClass);
+        $tokenSequencer->shouldReceive("getEntityMetadata")->andReturn($metadataMock);
         $tokenSequencer->shouldReceive("getIncludes")->andReturn($includes);
 
         return $tokenSequencer;
@@ -127,22 +107,22 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
             ],
             [ // #2 selecting aggregate functions, with expressions as arguments and multiple functions of the same name
                 [
-                    ["value", "function", "sum"],
+                    ["value", "function", "total"],
                     ["token", "open"],
                     ["reference", "field", "field1", ""],
                     ["value", "operator", "+"],
                     ["reference", "field", "field2", ""],
                     ["token", "close"],
-                    ["value", "function", "sum"],
+                    ["value", "function", "total"],
                     ["token", "open"],
                     ["reference", "field", "field3", ""],
                     ["token", "close"]
                 ],
-                "SELECT SUM(`field1` + `field2`) AS `sum`, SUM(`field3`) AS `sum_1` FROM `table_name`"
+                "SELECT SUM(`field1` + `field2`) AS `total`, SUM(`field3`) AS `total_1` FROM `table_name`"
             ],
             [ // #3 selecting aggregate functions with arbitrary nested closures and functions
                 [
-                    ["value", "function", "avg"],
+                    ["value", "function", "average"],
                     ["token", "open"],
                     ["reference", "field", "field1", ""],
                     ["value", "operator", "+"],
@@ -155,11 +135,11 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                     ["token", "close"],
                     ["token", "close"]
                 ],
-                "SELECT AVG(`field1` + ( `field2` - UNIX_TIMESTAMP() )) AS `avg` FROM `table_name`"
+                "SELECT AVG(`field1` + ( `field2` - UNIX_TIMESTAMP() )) AS `average` FROM `table_name`"
             ],
             [ // #4 selecting aggregate functions with arbitrary nested closures and functions, where the closure is the first operand
                 [
-                    ["value", "function", "avg"],
+                    ["value", "function", "average"],
                     ["token", "open"],
                     ["token", "open"],
                     ["reference", "field", "field2", ""],
@@ -172,7 +152,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                     ["reference", "field", "field1", ""],
                     ["token", "close"]
                 ],
-                "SELECT AVG(( `field2` - UNIX_TIMESTAMP() ) + `field1`) AS `avg` FROM `table_name`"
+                "SELECT AVG(( `field2` - UNIX_TIMESTAMP() ) + `field1`) AS `average` FROM `table_name`"
             ],
             [ // #5 using functions with multiple arguments
                 [
@@ -201,12 +181,11 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
     {
         $includes = $this->configureMetadataProvider($metadataConfig);
 
-        $targetMetadata = array_shift($metadataConfig);
+        $targetMetadata = array_shift($includes);
 
-        $tokenSequencer = $this->createMockTokenSequencer($tokens, $targetMetadata["class"], $includes);
+        $tokenSequencer = $this->createMockTokenSequencer($tokens, $targetMetadata, $includes);
 
         $interpreter = new FindInterpreter();
-        $interpreter->setEntityMetadataProvider($this->metadataProvider);
 
         /** @var TokenSequencerInterface $tokenSequencer */
         $this->assertEquals($expectedSql, $interpreter->interpretQuery($tokenSequencer));
@@ -313,7 +292,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "LEFT JOIN `two` ON (`two`.`id` IS NULL) " .
                         "LEFT JOIN `three` ON ( `one`.`one_id` = `three`.`one_id`) " .
                     "WHERE `one`.`field1` BETWEEN :int_0 AND :int_1" .
-                ") s ORDER BY IFNULL(`one__one_id`, :largest_value), IFNULL(`two__id`, :largest_value), IFNULL(`three__id`, :largest_value)"
+                ") s ORDER BY IFNULL(`one__one_id`, 999999999999999999999999), IFNULL(`two__id`, 999999999999999999999999), IFNULL(`three__id`, 999999999999999999999999)"
             ],
             [ // #2 two includes, including many to many join and target collection sort field
                 [
@@ -382,7 +361,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "LEFT JOIN `two` ON (`two`.`id` IS NULL) " .
                         "LEFT JOIN `one_three` ON ( `one`.`id` = `one_three`.`one_id`) " .
                         "LEFT JOIN `three` ON ( `one_three`.`three_id` = `three`.`id`)" .
-                ") s ORDER BY `one__field1` DESC, IFNULL(`two__id`, :largest_value), IFNULL(`three__id`, :largest_value)"
+                ") s ORDER BY `one__field1` DESC, IFNULL(`two__id`, 999999999999999999999999), IFNULL(`three__id`, 999999999999999999999999)"
             ],
             [ // #3 four includes, including child relationships
                 [
@@ -484,7 +463,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "LEFT JOIN `three` ON ( `one`.`id` = `three`.`one_id`) " .
                         "LEFT JOIN `four` ON (`four`.`id` IS NULL) " .
                         "LEFT JOIN `five` ON ( `three`.`id` = `five`.`three_id`)" .
-                ") s ORDER BY IFNULL(`one__id`, :largest_value), IFNULL(`two__id`, :largest_value), IFNULL(`three__id`, :largest_value), IFNULL(`four__id`, :largest_value), IFNULL(`five__id`, :largest_value)"
+                ") s ORDER BY IFNULL(`one__id`, 999999999999999999999999), IFNULL(`two__id`, 999999999999999999999999), IFNULL(`three__id`, 999999999999999999999999), IFNULL(`four__id`, 999999999999999999999999), IFNULL(`five__id`, 999999999999999999999999)"
             ]
         ];
     }

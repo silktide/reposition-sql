@@ -8,6 +8,7 @@ use Silktide\Reposition\QueryBuilder\QueryToken\Token;
 use Silktide\Reposition\QueryBuilder\QueryToken\Value;
 use Silktide\Reposition\QueryBuilder\QueryToken\Reference;
 use Silktide\Reposition\QueryBuilder\TokenSequencerInterface;
+use Silktide\Reposition\Metadata\EntityMetadata;
 
 class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 {
@@ -19,16 +20,12 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 
     public function interpretQuery(TokenSequencerInterface $query)
     {
-        if (empty($this->entityMetadataProvider)) {
-            throw new InterpretationException("Cannot interpret this 'find' query without an EntityMetadataProvider");
-        }
 
         $this->query = $query;
 
         $includes = $query->getIncludes();
-        $targetEntity = $query->getEntityName();
-        $metadata = $this->getEntityMetadata($targetEntity);
-        $mainCollection = $metadata->getCollection();
+        $mainMetadata = $query->getEntityMetadata();
+        $mainCollection = $mainMetadata->getCollection();
 
         $token = $query->getNextToken();
 
@@ -50,27 +47,13 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 
         // if we had no aggregate functions in the sequence, then this is a standard select query
         // so, we need to get the fields to return from the entity metadata for each
-        $entities = [];
         if (empty($this->fields)) {
-            $entity = $targetEntity;
-            $collectionAlias = $entity;
+            $metadata = $mainMetadata;
+            $collectionAlias = $mainCollection;
 
             do {
-                if (empty($entity)) {
+                if (empty($metadata)) {
                     continue;
-                }
-                $metadata = $this->getEntityMetadata($entity);
-
-                // get the collection
-                $collection = $metadata->getCollection();
-
-                // if the alias is the same as the entity name, use the collection instead
-                if ($collectionAlias == $entity) {
-                    $collectionAlias = $collection;
-                }
-
-                if ($entity != $targetEntity) {
-                    $entities[] = $entity;
                 }
 
                 // for each entity field, create an aliased SQL reference
@@ -81,7 +64,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
                     $this->fields[$thisFieldAlias] = $this->renderArbitraryReference($field, $thisFieldAlias);
                 }
 
-            } while (list($collectionAlias, $entity) = each($includes));
+            } while (list($collectionAlias, $metadata) = each($includes));
 
         }
 
@@ -90,7 +73,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         }
 
         // if this query has more than one include, it's more complex and requires separate processing
-        if (count($entities) > 1) {
+        if (count($includes) > 1) {
             return $this->renderIncludeQuery($token);
         }
 
@@ -139,17 +122,10 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
     protected function renderIncludeQuery(Token $token)
     {
         $collections = $this->query->getIncludes();
-        foreach ($collections as $alias => $entity) {
-            if ($alias == $entity) {
-                unset($collections[$alias]);
-                $alias =  $this->getEntityMetadata($entity)->getCollection();
-                $collections[$alias] = $entity;
-            }
-        }
 
-        $mainEntity = $this->query->getEntityName();
-        $metadata = $this->getEntityMetadata($mainEntity);
-        $mainCollection = $metadata->getCollection();
+        $mainMetadata = $this->query->getEntityMetadata();
+        $mainEntity = $mainMetadata->getEntity();
+        $mainCollection = $mainMetadata->getCollection();
 
 
         $fieldList = implode(", ", $this->fields);
@@ -214,7 +190,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 
         // add target entity to the collections array (as the first element to make sorting easier later)
         unset($collections[$mainCollection]);
-        $collections = array_merge([$mainCollection => $mainEntity], $collections);
+        $collections = array_merge([$mainCollection => $mainMetadata], $collections);
 
         $primaryKeys = $this->getPrimaryKeys($collections);
 
@@ -269,12 +245,11 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
     protected function getPrimaryKeys(array $collections)
     {
         $primaryKeys = [];
-        foreach ($collections as $alias => $entity) {
-            if (empty($entity)) {
+        foreach ($collections as $alias => $metadata) {
+            if (empty($metadata)) {
                 $primaryKeys[$alias] = "id";
                 continue;
             }
-            $metadata = $this->getEntityMetadata($entity);
             $primaryKeys[$alias] = $metadata->getPrimaryKey();
         }
         return $primaryKeys;
@@ -365,12 +340,20 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
             $mainCollectionSortFieldsExist = true;
         }
 
-        foreach ($collections as $alias => $entity) {
-            if (empty($entity) || ($alias == $mainCollection && $mainCollectionSortFieldsExist)) {
+        foreach ($collections as $alias => $metadata) {
+            /** @var EntityMetadata $metadata */
+            if (empty($metadata) || ($alias == $mainCollection && $mainCollectionSortFieldsExist)) {
                 continue;
             }
-            $sort[] = "IFNULL(" . $this->renderArbitraryReference($this->getSelectFieldAlias($alias. "." . $primaryKeys[$alias])) . ", :largest_value)";
-            $this->values["largest_value"] = 4294967295;
+
+            // get the largest value for the field type of the PK
+            $largestValue = "999999999999999999999999";
+            $pk = $primaryKeys[$alias];
+            if ($metadata->getFieldType($pk) == "string") {
+                $largestValue = "0xFFFF";
+            }
+
+            $sort[] = "IFNULL(" . $this->renderArbitraryReference($this->getSelectFieldAlias($alias. "." . $primaryKeys[$alias])) . ", $largestValue)";
         }
         return $sort;
     }

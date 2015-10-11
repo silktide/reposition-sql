@@ -8,18 +8,9 @@ use Silktide\Reposition\QueryBuilder\QueryToken\Reference;
 use Silktide\Reposition\QueryBuilder\QueryToken\Token;
 use Silktide\Reposition\QueryBuilder\QueryToken\Value;
 use Silktide\Reposition\QueryBuilder\TokenSequencerInterface;
-use Silktide\Reposition\Metadata\EntityMetadataProviderInterface;
-use Silktide\Reposition\Metadata\EntityMetadata;
 
 abstract class AbstractSqlQueryTypeInterpreter
 {
-
-    /**
-     * @var EntityMetadataProviderInterface
-     */
-    protected $entityMetadataProvider;
-
-    protected $entityMetadataCache = [];
 
     /**
      * @var TokenSequencerInterface
@@ -36,27 +27,6 @@ abstract class AbstractSqlQueryTypeInterpreter
      * @return string
      */
     abstract public function supportedQueryType();
-
-    /**
-     * @param EntityMetadataProviderInterface $provider
-     */
-    public function setEntityMetadataProvider(EntityMetadataProviderInterface $provider)
-    {
-        $this->entityMetadataProvider = $provider;
-    }
-
-    /**
-     * @param $entity
-     *
-     * @return EntityMetadata
-     */
-    protected function getEntityMetadata($entity)
-    {
-        if (empty($this->entityMetadataCache[$entity])) {
-            $this->entityMetadataCache[$entity] = $this->entityMetadataProvider->getEntityMetadata($entity);
-        }
-        return $this->entityMetadataCache[$entity];
-    }
 
     abstract public function interpretQuery(TokenSequencerInterface $query);
 
@@ -109,11 +79,12 @@ abstract class AbstractSqlQueryTypeInterpreter
     protected function renderValue(Value $token)
     {
         $type = $token->getType();
+        $value = $token->getValue();
         switch ($type) {
             case Value::TYPE_NULL:
                 return "NULL";
             case Value::TYPE_BOOL:
-                return $token->getValue()? "TRUE": "FALSE";
+                return $value? "TRUE": "FALSE";
             case Value::TYPE_STRING:
             case Value::TYPE_INT:
             case Value::TYPE_FLOAT:
@@ -121,12 +92,24 @@ abstract class AbstractSqlQueryTypeInterpreter
                 $ordinal = count($this->values);
                 $valueId = $type . "_$ordinal";
                 // save the value and return the reference
-                $this->values[$valueId] = $token->getValue();
+                $this->values[$valueId] = $value;
                 return ":$valueId";
+            case "function":
+                // translate function name
+                $nameMap = [
+                    "total" => "sum",
+                    "maximum" => "max",
+                    "minimum" => "min",
+                    "average" => "avg"
+                ];
+                if (!empty($nameMap[$value])) {
+                    $value = $nameMap[$value];
+                }
+                break;
         }
 
         // this token is an sql keyword or operator, so render it's value directly
-        return strtoupper($token->getValue());
+        return strtoupper($value);
 
     }
 
@@ -207,6 +190,7 @@ abstract class AbstractSqlQueryTypeInterpreter
         if (empty($open)) {
             throw new QueryException("Unexpected end of token sequence. Expecting 'open parentheses' token for a function");
         }
+
         $sql =
             $this->renderValue($token) .                    // function name
             $this->renderToken($open);     // open parentheses
