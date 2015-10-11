@@ -1,0 +1,40 @@
+parameters:
+    dbDriver: "mysql"
+    dbName: ""
+    dbHost: ""
+    dbUsername: ""
+    dbPassword: ""
+
+
+services:
+    storage:
+        class: Silktide\Reposition\Sql\Storage\SqlStorage
+        arguments:
+            - @dbAdapter
+            - @interpreter
+            - @silktide_reposition.repositoryManager
+            - @silktide_reposition.hydrator
+            - @normaliser
+
+    dbAdapter:
+        class: Silktide\Reposition\Sql\Storage\PdoAdapter
+        arguments:
+            - %dbDriver%
+            - %dbName%
+            - %dbHost%
+            - %dbUsername%
+            - %dbPassword%
+
+    interpreter:
+        class: Silktide\Reposition\Sql\QueryInterpreter\SqlQueryInterpreter
+        arguments:
+            - "@silktide_reposition.tokenParser"
+            - "#queryTypeInterpreter"
+
+    findInterpreter:
+        class: Silktide\Reposition\Sql\QueryInterpreter\Type\FindInterpreter
+        tags:
+            - "queryTypeInterpreter"
+
+    normaliser:
+        class: Silktide\Reposition\Sql\Normliser\SqlNormaliser
