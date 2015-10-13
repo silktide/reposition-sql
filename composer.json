@@ -3,16 +3,9 @@
   "description": "SQL module for silktide/reposition",
   "license": "MIT",
   "homepage": "https://github.com/silktide/reposition-sql",
-  "repositories": [
-      {
-          "type": "vcs",
-          "url": "https://github.com/downsider/reposition"
-      }
-
-  ],
   "require": {
     "php": ">=5.5.0",
-    "silktide/reposition": "dev-develop"
+    "silktide/reposition": "^1.0"
   },
   "require-dev": {
     "phpunit/phpunit": "4.*",
