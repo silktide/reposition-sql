@@ -1,3 +1,6 @@
+imports:
+    - "statementDefinition.yml"
+
 parameters:
     dbDriver: "mysql"
     dbName: ""
@@ -12,8 +15,7 @@ services:
         arguments:
             - @dbAdapter
             - @interpreter
-            - @silktide_reposition.repositoryManager
-            - @silktide_reposition.hydrator
+            - @silktide_reposition.defaultHydrator
             - @normaliser
 
     dbAdapter:
@@ -37,4 +39,10 @@ services:
             - "queryTypeInterpreter"
 
     normaliser:
-        class: Silktide\Reposition\Sql\Normliser\SqlNormaliser
+        class: Silktide\Reposition\Sql\Normaliser\SqlNormaliser
+
+    silktide_reposition.defaultStorage:
+        aliasOf: "@storage"
+
+    silktide_reposition.defaultNormaliser:
+            aliasOf: "@normaliser"
