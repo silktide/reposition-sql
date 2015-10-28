@@ -117,6 +117,7 @@ parameters:
             -
                 name: open
                 optional: true
+                flag: isOpen
             -
                 any:
                     type:
@@ -132,12 +133,13 @@ parameters:
                 optional: true
             -
                 name: close
-                optional: true
+                optional: isOpen
 
         expression:
             -
                 name: open
                 optional: true
+                flag: isOpen
             -
                 type: operand
             -
@@ -145,7 +147,7 @@ parameters:
                 optional: true
             -
                 name: close
-                optional: true
+                optional: isOpen
 
         closed-expression:
             -
