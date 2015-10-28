@@ -58,6 +58,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 
                 // for each entity field, create an aliased SQL reference
                 $entityFields = $metadata->getFieldNames();
+                sort($entityFields);
                 foreach ($entityFields as $field) {
                     $field = $collectionAlias . "." . $field;
                     $thisFieldAlias = $this->getSelectFieldAlias($field);
@@ -124,7 +125,6 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         $collections = $this->query->getIncludes();
 
         $mainMetadata = $this->query->getEntityMetadata();
-        $mainEntity = $mainMetadata->getEntity();
         $mainCollection = $mainMetadata->getCollection();
 
 
@@ -246,6 +246,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
     {
         $primaryKeys = [];
         foreach ($collections as $alias => $metadata) {
+            /** @var EntityMetadata $metadata */
             if (empty($metadata)) {
                 $primaryKeys[$alias] = "id";
                 continue;
@@ -316,6 +317,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         // parse order by, taking any field related to the main collection, plus the first field from the included collections, wrapped in an IFNULL()
         $sort = [];
         do {
+            /** @var Token $token */
             if (!empty($token) && $token->getType() == 'sort') {
                 $appendDirection = false;
                 while(($token = $this->query->getNextToken()) && $token->getType() != 'limit') {

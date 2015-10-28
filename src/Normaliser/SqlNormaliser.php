@@ -103,22 +103,36 @@ class SqlNormaliser implements NormaliserInterface
         $metadata = $this->metadataProvider->getEntityMetadata($entity);
         $availableJoins = $metadata->getRelationships();
 
-        foreach ($entityMap as $childAlias => $childEntity) {
-            if (empty($availableJoins[$childAlias])) {
+        foreach ($entityMap as $childAlias => $childMetadata) {
+            /** @var EntityMetadata $childMetadata */
+            $childEntity = $childMetadata->getEntity();
+
+            $thisJoin = !empty($availableJoins[$childAlias])
+                ? $availableJoins[$childAlias]
+                : (!empty($availableJoins[$childEntity])
+                    ? $availableJoins[$childEntity]
+                    : []
+                );
+            if (empty($thisJoin)) {
                 continue;
             }
-            if (empty($availableJoins[$childAlias][EntityMetadata::METADATA_RELATIONSHIP_PROPERTY])) {
+            if (empty($thisJoin[EntityMetadata::METADATA_RELATIONSHIP_PROPERTY])) {
                 throw new NormalisationException("No property for '$entity' defined in the relationship for '$childAlias'");
             }
-            $property = $availableJoins[$childAlias][EntityMetadata::METADATA_RELATIONSHIP_PROPERTY];
+            $property = $thisJoin[EntityMetadata::METADATA_RELATIONSHIP_PROPERTY];
 
             if (empty($fields[$childAlias])) {
                 // get this entities collection from it's metadata and try that
-                $childMetadata = $this->metadataProvider->getEntityMetadata($childEntity);
+
                 $childAlias = $childMetadata->getCollection();
                 if (empty($fields[$childAlias])) {
                     continue;
                 }
+            }
+
+            if ($thisJoin[EntityMetadata::METADATA_RELATIONSHIP_TYPE] == EntityMetadata::RELATIONSHIP_TYPE_ONE_TO_ONE) {
+                // mark this branch as a non-collection
+                $fields[$childAlias][""] = true;
             }
 
             $fields[$alias][$property] = &$fields[$childAlias];
@@ -162,6 +176,9 @@ class SqlNormaliser implements NormaliserInterface
         do {
             $denormalisedRow = [];
             foreach ($fields as $newField => $field) {
+                if (empty($newField)) {
+                    continue;
+                }
                 try {
                     $denormalisedRow[$newField] = (is_array($field))
                         ? $this->denormaliseData($data, $field, $firstField)
@@ -184,6 +201,13 @@ class SqlNormaliser implements NormaliserInterface
         if ($stepDataBackOne) {
             // rewind the data array by 1, so we don't skip any rows if this has been called recursively
             prev($data);
+        }
+
+        // if this field set has been marked as a non-collection, return the first row of data or null
+        if (!empty($fields[""])) {
+            $denormalisedData = empty($denormalisedData)
+                ? null
+                : $denormalisedData[0];
         }
 
         return $denormalisedData;
