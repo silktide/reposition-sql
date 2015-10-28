@@ -4,20 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "760c6d43b114b9903bb4529f44cd223d",
+    "hash": "20f09c895e832cc9f4783892e4548fa6",
+    "content-hash": "34daed809ffb0087f447354a81521657",
     "packages": [
         {
             "name": "silktide/reposition",
-            "version": "1.0.0",
+            "version": "1.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/silktide/reposition.git",
-                "reference": "4c53518b95f347d9e01144dd0fda2cf500226bd7"
+                "reference": "31f994fb457a1d251918d15320ec2d801f88164d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/silktide/reposition/zipball/4c53518b95f347d9e01144dd0fda2cf500226bd7",
-                "reference": "4c53518b95f347d9e01144dd0fda2cf500226bd7",
+                "url": "https://api.github.com/repos/silktide/reposition/zipball/31f994fb457a1d251918d15320ec2d801f88164d",
+                "reference": "31f994fb457a1d251918d15320ec2d801f88164d",
                 "shasum": ""
             },
             "require": {
@@ -50,7 +51,7 @@
             ],
             "description": "A modular database abstraction system",
             "homepage": "https://github.com/silktide/reposition",
-            "time": "2015-10-13 19:59:46"
+            "time": "2015-10-28 00:43:41"
         }
     ],
     "packages-dev": [
@@ -569,16 +570,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "4.8.12",
+            "version": "4.8.16",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "00194eb95989190a73198390ceca081ad3441a7f"
+                "reference": "625f8c345606ed0f3a141dfb88f4116f0e22978e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/00194eb95989190a73198390ceca081ad3441a7f",
-                "reference": "00194eb95989190a73198390ceca081ad3441a7f",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/625f8c345606ed0f3a141dfb88f4116f0e22978e",
+                "reference": "625f8c345606ed0f3a141dfb88f4116f0e22978e",
                 "shasum": ""
             },
             "require": {
@@ -637,7 +638,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2015-10-12 03:36:47"
+            "time": "2015-10-23 06:48:33"
         },
         {
             "name": "phpunit/phpunit-mock-objects",
@@ -1068,23 +1069,20 @@
         },
         {
             "name": "symfony/yaml",
-            "version": "v2.7.5",
+            "version": "v2.7.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/yaml.git",
-                "reference": "31cb2ad0155c95b88ee55fe12bc7ff92232c1770"
+                "reference": "eca9019c88fbe250164affd107bc8057771f3f4d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/31cb2ad0155c95b88ee55fe12bc7ff92232c1770",
-                "reference": "31cb2ad0155c95b88ee55fe12bc7ff92232c1770",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/eca9019c88fbe250164affd107bc8057771f3f4d",
+                "reference": "eca9019c88fbe250164affd107bc8057771f3f4d",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.9"
-            },
-            "require-dev": {
-                "symfony/phpunit-bridge": "~2.7"
             },
             "type": "library",
             "extra": {
@@ -1113,7 +1111,7 @@
             ],
             "description": "Symfony Yaml Component",
             "homepage": "https://symfony.com",
-            "time": "2015-09-14 14:14:09"
+            "time": "2015-10-11 09:39:48"
         }
     ],
     "aliases": [],

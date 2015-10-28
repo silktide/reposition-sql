@@ -23,16 +23,12 @@ class SqlStorage implements StorageInterface
     public function __construct(
         PdoAdapter $database,
         SqlQueryInterpreter $interpreter,
-        EntityMetadataProviderInterface $entityMetadataProvider,
         HydratorInterface $hydrator = null,
         NormaliserInterface $normaliser = null
     ) {
         $this->database = $database;
         $this->interpreter = $interpreter;
-        $this->entityMetadataProvider = $entityMetadataProvider;
         $this->hydrator = $hydrator;
-
-        $this->interpreter->setEntityMetadataProvider($this->entityMetadataProvider);
 
         if (!empty($normaliser)) {
             $this->interpreter->setNormaliser($normaliser);
@@ -41,6 +37,17 @@ class SqlStorage implements StorageInterface
             }
         }
 
+    }
+
+    public function setEntityMetadataProvider(EntityMetadataProviderInterface $provider)
+    {
+        $this->entityMetadataProvider = $provider;
+        $this->interpreter->setEntityMetadataProvider($this->entityMetadataProvider);
+    }
+
+    public function hasEntityMetadataProvider()
+    {
+        return !empty($this->entityMetadataProvider);
     }
 
     /**
