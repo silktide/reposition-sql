@@ -16,27 +16,33 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
      * @param array $dataSet
      * @param array $expectedData
      * @param array $entityMap
-     * @param string $entity
+     * @param string $thisEntity
      */
     public function testDenormalisation(array $dataSet, array $expectedData, array $entityMap = [], $thisEntity = "")
     {
+        $type = EntityMetadata::METADATA_RELATIONSHIP_TYPE;
         $propField = EntityMetadata::METADATA_RELATIONSHIP_PROPERTY;
+        $o2m = EntityMetadata::RELATIONSHIP_TYPE_ONE_TO_MANY;
 
         $relationships = [
             "one" => [
                 "two" => [
+                    $type => $o2m,
                     $propField => "twos"
                 ],
                 "three" => [
+                    $type => $o2m,
                     $propField => "threes"
                 ]
             ],
             "two" => [],
             "three" => [
                 "four" => [
+                    $type => $o2m,
                     $propField => "fours"
                 ],
                 "two" => [
+                    $type => $o2m,
                     $propField => "twos"
                 ]
             ],
@@ -77,6 +83,18 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
 
     public function dataSetProvider()
     {
+        $two = \Mockery::mock("Silktide\\Reposition\\Metadata\\EntityMetadata");
+        $two->shouldReceive("getEntity")->andReturn("two");
+        $two->shouldReceive("getCollection")->andReturn("two");
+
+        $three = \Mockery::mock("Silktide\\Reposition\\Metadata\\EntityMetadata");
+        $three->shouldReceive("getEntity")->andReturn("three");
+        $three->shouldReceive("getCollection")->andReturn("three");
+
+        $four = \Mockery::mock("Silktide\\Reposition\\Metadata\\EntityMetadata");
+        $four->shouldReceive("getEntity")->andReturn("four");
+        $four->shouldReceive("getCollection")->andReturn("four");
+
         return [
             [ // #0 simplest mapping possible
                 [["field1" => "value1", "field2" => "value2", "field3" => "value3"]],
@@ -89,7 +107,7 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
             [ // #2 single record, single child
                 [["one__field1" => "value1", "one__field2" => "value2", "two__field3" => "value3", "two__field4" => "value4"]],
                 [["field1" => "value1", "field2" => "value2", "twos" => [["field3" => "value3", "field4" => "value4"]]]],
-                ["two" => "two"],
+                ["two" => $two],
                 "one"
             ],
             [ // #3 single record, multiple children
@@ -103,7 +121,7 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                     ["field3" => "value5", "field4" => "value6"],
                     ["field3" => "value7", "field4" => "value8"]
                 ]]],
-                ["two" => "two"],
+                ["two" => $two],
                 "one"
             ],
             [ // #4 multiple records, multiple children
@@ -123,7 +141,7 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                         ["field3" => "value11", "field4" => "value12"]
                     ]]
                 ],
-                ["two" => "two"],
+                ["two" => $two],
                 "one"
             ],
             [ // #5 ignoring children
@@ -147,7 +165,7 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                         ["field5" => "value5", "field6" => "value6", "twos" => []]
                     ]
                 ]],
-                ["two" => "two", "three" => "three"],
+                ["two" => $two, "three" => $three],
                 "one"
             ],
             [ // #7 multiple records, multiple relationships
@@ -171,7 +189,7 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                     ]
                     ]
                 ],
-                ["two" => "two", "three" => "three"],
+                ["two" => $two, "three" => $three],
                 "one"
             ],
             [ // #8 single record, multi-level relationships
@@ -185,7 +203,7 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                             ]]
                     ]]
                 ],
-                ["four" => "two", "three" => "three"],
+                ["four" => $four, "three" => $three],
                 "one"
             ]
         ];
