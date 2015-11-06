@@ -86,10 +86,6 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
             if (empty($token)) {
                 break;
             }
-            if ($token->getType() == "sort") {
-                $this->renderSort($token);
-                continue;
-            }
 
             $sql .= " " . $this->renderToken($token);
         } while ($token = $this->query->getNextToken());

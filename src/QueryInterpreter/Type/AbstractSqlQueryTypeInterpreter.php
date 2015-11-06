@@ -43,8 +43,18 @@ abstract class AbstractSqlQueryTypeInterpreter
     protected function renderToken(Token $token)
     {
         $type = $token->getType();
-        if ($type == "function" && $token instanceof Value) {
-            return $this->renderFunction($token);
+
+        // handle edge cases
+        switch ($type) {
+            case "open":
+                return "(";
+            case "close":
+                return ")";
+            case "sort":
+                return $this->renderSort();
+            case "function":
+                /** @var Value $token */
+                return $this->renderFunction($token);
         }
 
         if ($token instanceof Entity) {
@@ -55,17 +65,6 @@ abstract class AbstractSqlQueryTypeInterpreter
         }
         if ($token instanceof Value) {
             return $this->renderValue($token);
-        }
-
-        // handle edge cases
-
-        switch ($type) {
-            case "open":
-                return "(";
-            case "close":
-                return ")";
-            case "sort":
-                return "ORDER BY";
         }
 
         return strtoupper($type);
@@ -82,18 +81,11 @@ abstract class AbstractSqlQueryTypeInterpreter
         $value = $token->getValue();
         switch ($type) {
             case Value::TYPE_NULL:
-                return "NULL";
             case Value::TYPE_BOOL:
-                return $value? "TRUE": "FALSE";
             case Value::TYPE_STRING:
             case Value::TYPE_INT:
             case Value::TYPE_FLOAT:
-                // create value reference ID for replacing
-                $ordinal = count($this->values);
-                $valueId = $type . "_$ordinal";
-                // save the value and return the reference
-                $this->values[$valueId] = $value;
-                return ":$valueId";
+                return $this->renderValueParameter($value, $type);
             case "function":
                 // translate function name
                 $nameMap = [
@@ -140,6 +132,27 @@ abstract class AbstractSqlQueryTypeInterpreter
         return " AS `$alias`";
     }
 
+    protected function renderValueParameter($value, $type = null)
+    {
+        if (empty($type)) {
+            $type = "value";
+        }
+
+        if ($type == Value::TYPE_NULL) {
+            return "NULL";
+        }
+        if ($type == Value::TYPE_BOOL) {
+            return $value? "TRUE": "FALSE";
+        }
+
+        // create value reference ID for replacing
+        $ordinal = count($this->values);
+        $valueId = $type . "_$ordinal";
+        // save the value and return the reference
+        $this->values[$valueId] = $value;
+        return ":$valueId";
+    }
+
     /**
      * @param Entity $token
      *
@@ -147,17 +160,16 @@ abstract class AbstractSqlQueryTypeInterpreter
      */
     abstract protected function renderEntity(Entity $token);
 
-    protected function renderSort(Token $token)
+    protected function renderSort()
     {
-        $sql = $this->renderToken($token) . " ";
-
+        $sql = "ORDER BY";
         $order = [];
 
         while ($token = $this->query->getNextToken()) {
             // if this is a limit token, we're done so create the sort list SQL and also render the limit token
             // not ideal to render the limit token here, but there's no other way of detecting the end of a sort list
-            if ($token->getType() != "limit") {
-                $sql .= implode(", ", $order);
+            if ($token->getType() == "limit") {
+                $sql .= implode(",", $order);
                 $sql .= " " . $this->renderToken($token);
                 return $sql;
             }
@@ -168,11 +180,11 @@ abstract class AbstractSqlQueryTypeInterpreter
             }
 
             // render sort field
-            $order[] = $this->renderToken($token);
+            $order[] = " " . $this->renderToken($token);
         }
 
         // render sort list
-        $sql .= implode(", ", $order);
+        $sql .= implode(",", $order);
 
         return $sql;
     }
