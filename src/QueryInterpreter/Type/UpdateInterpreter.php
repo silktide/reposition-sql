@@ -13,7 +13,7 @@ class UpdateInterpreter extends AbstractSqlQueryTypeInterpreter
 {
     public function supportedQueryType()
     {
-        TokenSequencerInterface::TYPE_UPDATE;
+        return TokenSequencerInterface::TYPE_UPDATE;
     }
 
     public function interpretQuery(TokenSequencerInterface $query)
