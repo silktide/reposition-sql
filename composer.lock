@@ -4,21 +4,61 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "20f09c895e832cc9f4783892e4548fa6",
-    "content-hash": "34daed809ffb0087f447354a81521657",
+    "hash": "0fd0dc4e8d5e35f3e61bdc37f386106e",
+    "content-hash": "b20adbbde820889fb4ded8db6ea497ad",
     "packages": [
         {
-            "name": "silktide/reposition",
-            "version": "1.0.3",
+            "name": "downsider/clay",
+            "version": "1.1.2",
             "source": {
                 "type": "git",
-                "url": "https://github.com/silktide/reposition.git",
-                "reference": "6519f25b8950031f4e368d39745f88ca6cabb34f"
+                "url": "https://github.com/downsider/clay.git",
+                "reference": "9f0aac498cbd228ca3696a07c194ead8fe2cefb8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/silktide/reposition/zipball/6519f25b8950031f4e368d39745f88ca6cabb34f",
-                "reference": "6519f25b8950031f4e368d39745f88ca6cabb34f",
+                "url": "https://api.github.com/repos/downsider/clay/zipball/9f0aac498cbd228ca3696a07c194ead8fe2cefb8",
+                "reference": "9f0aac498cbd228ca3696a07c194ead8fe2cefb8",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "4.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Downsider\\Clay\\": "src",
+                    "Downsider\\Clay\\Test\\": "test"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Create lightweight models and apply complex data structures to them",
+            "homepage": "https://github.com/downsider/clay",
+            "keywords": [
+                "lightweight",
+                "model",
+                "models"
+            ],
+            "time": "2015-10-28 22:40:13"
+        },
+        {
+            "name": "silktide/reposition",
+            "version": "1.0.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/silktide/reposition.git",
+                "reference": "18dd403ed6c55edfb67e2b9c95e74f07ab44a5a4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/silktide/reposition/zipball/18dd403ed6c55edfb67e2b9c95e74f07ab44a5a4",
+                "reference": "18dd403ed6c55edfb67e2b9c95e74f07ab44a5a4",
                 "shasum": ""
             },
             "require": {
@@ -51,7 +91,7 @@
             ],
             "description": "A modular database abstraction system",
             "homepage": "https://github.com/silktide/reposition",
-            "time": "2015-10-28 22:55:21"
+            "time": "2015-10-29 23:21:34"
         }
     ],
     "packages-dev": [

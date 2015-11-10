@@ -44,7 +44,7 @@ parameters:
 
         update:
             -
-                type: expression
+                type: assignment
                 multiple: true
             -
                 type: where
@@ -159,6 +159,12 @@ parameters:
                 optional: true
             -
                 name: close
+
+        assignment:
+            -
+                name: field
+            -
+                type: operator-expression
 
         logic-condition:
             -

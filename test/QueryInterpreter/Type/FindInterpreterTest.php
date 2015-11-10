@@ -86,9 +86,9 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
     public function simpleTokenSequenceProvider()
     {
         $defaultSql = "SELECT " .
-                      "`table_name`.`string_field` AS `table_name__string_field`, " .
+                      "`table_name`.`bool_field` AS `table_name__bool_field`, " .
                       "`table_name`.`int_field` AS `table_name__int_field`, " .
-                      "`table_name`.`bool_field` AS `table_name__bool_field` " .
+                      "`table_name`.`string_field` AS `table_name__string_field` " .
                       "FROM `table_name`";
 
         return [
@@ -276,18 +276,18 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                 ],
                 "SELECT * FROM (" .
                     "SELECT " .
-                        "`one`.`one_id` AS `one__one_id`, `one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, " .
-                        "`two`.`id` AS `two__id`, `two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, " .
-                        "`three`.`id` AS `three__id`, `three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6` " .
+                        "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`one_id` AS `one__one_id`, " .
+                        "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
+                        "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id` " .
                     "FROM `one` " .
                         "LEFT JOIN `two` ON ( `one`.`one_id` = `two`.`one_id`) " .
                         "LEFT JOIN `three` ON (`three`.`id` IS NULL) " .
                     "WHERE `one`.`field1` BETWEEN :int_0 AND :int_1 " .
                     "UNION " .
                     "SELECT " .
-                        "`one`.`one_id` AS `one__one_id`, `one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, " .
-                        "`two`.`id` AS `two__id`, `two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, " .
-                        "`three`.`id` AS `three__id`, `three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6` " .
+                        "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`one_id` AS `one__one_id`, " .
+                        "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
+                        "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id` " .
                     "FROM `one` " .
                         "LEFT JOIN `two` ON (`two`.`id` IS NULL) " .
                         "LEFT JOIN `three` ON ( `one`.`one_id` = `three`.`one_id`) " .
@@ -345,18 +345,18 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                 ],
                 "SELECT * FROM (" .
                     "SELECT " .
-                        "`one`.`id` AS `one__id`, `one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, " .
-                        "`two`.`id` AS `two__id`, `two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, " .
-                        "`three`.`id` AS `three__id`, `three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6` " .
+                        "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
+                        "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
+                        "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id` " .
                     "FROM `one` " .
                         "LEFT JOIN `two` ON ( `one`.`id` = `two`.`one_id`) " .
                         "LEFT JOIN `one_three` ON (`one_three`.`id` IS NULL) " .
                         "LEFT JOIN `three` ON (`three`.`id` IS NULL) " .
                     "UNION " .
                     "SELECT " .
-                        "`one`.`id` AS `one__id`, `one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, " .
-                        "`two`.`id` AS `two__id`, `two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, " .
-                        "`three`.`id` AS `three__id`, `three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6` " .
+                        "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
+                        "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
+                        "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id` " .
                     "FROM `one` " .
                         "LEFT JOIN `two` ON (`two`.`id` IS NULL) " .
                         "LEFT JOIN `one_three` ON ( `one`.`id` = `one_three`.`one_id`) " .
@@ -429,11 +429,11 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                 ],
                 "SELECT * FROM (" .
                     "SELECT " .
-                        "`one`.`id` AS `one__id`, `one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, " .
-                        "`two`.`id` AS `two__id`, `two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, " .
-                        "`three`.`id` AS `three__id`, `three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, " .
-                        "`four`.`id` AS `four__id`, `four`.`field7` AS `four__field7`, " .
-                        "`five`.`id` AS `five__id`, `five`.`field8` AS `five__field8` " .
+                        "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
+                        "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
+                        "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id`, " .
+                        "`four`.`field7` AS `four__field7`, `four`.`id` AS `four__id`, " .
+                        "`five`.`field8` AS `five__field8`, `five`.`id` AS `five__id` " .
                     "FROM `one` " .
                         "LEFT JOIN `two` ON ( `one`.`id` = `two`.`one_id`) " .
                         "LEFT JOIN `three` ON (`three`.`id` IS NULL) " .
@@ -441,11 +441,11 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "LEFT JOIN `five` ON (`five`.`id` IS NULL) " .
                     "UNION " .
                     "SELECT " .
-                        "`one`.`id` AS `one__id`, `one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, " .
-                        "`two`.`id` AS `two__id`, `two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, " .
-                        "`three`.`id` AS `three__id`, `three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, " .
-                        "`four`.`id` AS `four__id`, `four`.`field7` AS `four__field7`, " .
-                        "`five`.`id` AS `five__id`, `five`.`field8` AS `five__field8` " .
+                        "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
+                        "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
+                        "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id`, " .
+                        "`four`.`field7` AS `four__field7`, `four`.`id` AS `four__id`, " .
+                        "`five`.`field8` AS `five__field8`, `five`.`id` AS `five__id` " .
                     "FROM `one` " .
                         "LEFT JOIN `two` ON (`two`.`id` IS NULL) " .
                         "LEFT JOIN `three` ON ( `one`.`id` = `three`.`one_id`) " .
@@ -453,11 +453,11 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "LEFT JOIN `five` ON (`five`.`id` IS NULL) " .
                     "UNION " .
                     "SELECT " .
-                        "`one`.`id` AS `one__id`, `one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, " .
-                        "`two`.`id` AS `two__id`, `two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, " .
-                        "`three`.`id` AS `three__id`, `three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, " .
-                        "`four`.`id` AS `four__id`, `four`.`field7` AS `four__field7`, " .
-                        "`five`.`id` AS `five__id`, `five`.`field8` AS `five__field8` " .
+                        "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
+                        "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
+                        "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id`, " .
+                        "`four`.`field7` AS `four__field7`, `four`.`id` AS `four__id`, " .
+                        "`five`.`field8` AS `five__field8`, `five`.`id` AS `five__id` " .
                     "FROM `one` " .
                         "LEFT JOIN `two` ON (`two`.`id` IS NULL) " .
                         "LEFT JOIN `three` ON ( `one`.`id` = `three`.`one_id`) " .
