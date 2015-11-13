@@ -2,22 +2,64 @@
 
 namespace Silktide\Reposition\Sql\Storage;
 
-class PdoAdapter extends \PDO
+/**
+ * Class PdoAdapter
+ *
+ * Wrapper for a PDO connection with lazy loading
+ *
+ * @package Silktide\Reposition\Sql\Storage
+ */
+class PdoAdapter
 {
 
-    public function __construct(DbCredentialsInterface $credentials) {
+    /**
+     * @var DbCredentialsInterface
+     */
+    protected $credentials;
 
-        $acceptedAdapters = self::getAvailableDrivers();
+    /**
+     * @var \PDO
+     */
+    protected $pdo;
 
-        $driver = $credentials->getDriver();
+    /**
+     * @param DbCredentialsInterface $credentials
+     * @param bool $lazyConnection
+     */
+    public function __construct(DbCredentialsInterface $credentials, $lazyConnection = true)
+    {
+        $this->credentials = $credentials;
+        if (!$lazyConnection) {
+            $this->connect();
+        }
+    }
+
+    public function connect()
+    {
+        $acceptedAdapters = \PDO::getAvailableDrivers();
+
+        $driver = $this->credentials->getDriver();
 
         if (!in_array($driver, $acceptedAdapters)) {
             throw new \PDOException("The driver '$driver' is not currently available to use with PDO");
         }
 
-        $dsn = "$driver:dbname={$credentials->getSchema()};host={$credentials->getHost()}";
+        $dsn = "$driver:dbname={$this->credentials->getSchema()};host={$this->credentials->getHost()}";
 
-        parent::__construct($dsn, $credentials->getUsername(), $credentials->getPassword());
+        $this->pdo = new \PDO($dsn, $this->credentials->getUsername(), $this->credentials->getPassword());
+    }
+
+    /**
+     * @param string $statement
+     * @param array $driverOptions
+     * @return \PDOStatement
+     */
+    public function prepare($statement, array $driverOptions = [])
+    {
+        if (empty($this->pdo)) {
+            $this->connect();
+        }
+        return $this->pdo->prepare($statement, $driverOptions);
     }
 
     /**
