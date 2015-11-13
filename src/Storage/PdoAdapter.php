@@ -5,17 +5,19 @@ namespace Silktide\Reposition\Sql\Storage;
 class PdoAdapter extends \PDO
 {
 
-    public function __construct($driver, $schema, $host, $username, $password) {
+    public function __construct(DbCredentialsInterface $credentials) {
 
         $acceptedAdapters = self::getAvailableDrivers();
+
+        $driver = $credentials->getDriver();
 
         if (!in_array($driver, $acceptedAdapters)) {
             throw new \PDOException("The driver '$driver' is not currently available to use with PDO");
         }
 
-        $dsn = "$driver:dbname=$schema;host=$host";
+        $dsn = "$driver:dbname={$credentials->getSchema()};host={$credentials->getHost()}";
 
-        parent::__construct($dsn, $username, $password);
+        parent::__construct($dsn, $credentials->getUsername(), $credentials->getPassword());
     }
 
     /**
