@@ -10,6 +10,8 @@ parameters:
 
     identifierDelimiter: "`"
 
+    silktide_reposition.tokenDefinitions: %silktide_reposition-sql.sqlStatementDefinition%
+
 services:
     storage:
         class: Silktide\Reposition\Sql\Storage\SqlStorage
