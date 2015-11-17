@@ -47,10 +47,13 @@ class UpdateInterpreter extends AbstractSqlQueryTypeInterpreter
                 "function",
                 "close",
                 Value::TYPE_BOOL,
+                Value::TYPE_BOOLEAN,
                 Value::TYPE_NULL,
                 Value::TYPE_INT,
+                Value::TYPE_INTEGER,
                 Value::TYPE_FLOAT,
-                Value::TYPE_STRING
+                Value::TYPE_STRING,
+                Value::TYPE_ARRAY
             ];
 
             // if we're in the root level for this assignment and the current token is an "end" type ...
