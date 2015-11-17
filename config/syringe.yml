@@ -3,11 +3,14 @@ imports:
 
 parameters:
     dbDriver: "mysql"
-    dbName: ""
     dbHost: ""
     dbUsername: ""
     dbPassword: ""
+    dbName: ""
 
+    identifierDelimiter: "`"
+
+    silktide_reposition.tokenDefinitions: %silktide_reposition-sql.sqlStatementDefinition%
 
 services:
     storage:
@@ -27,16 +30,17 @@ services:
         class: Silktide\Reposition\Sql\Storage\DbCredentials
         arguments:
             - %dbDriver%
-            - %dbName%
             - %dbHost%
             - %dbUsername%
             - %dbPassword%
+            - %dbName%
 
     interpreter:
         class: Silktide\Reposition\Sql\QueryInterpreter\SqlQueryInterpreter
         arguments:
             - @silktide_reposition.tokenParser
             - "#queryTypeInterpreter"
+            - %identifierDelimiter%
 
     findInterpreter:
         class: Silktide\Reposition\Sql\QueryInterpreter\Type\FindInterpreter

@@ -208,8 +208,10 @@ parameters:
                     name:
                         - string
                         - int
+                        - integer
                         - float
                         - bool
+                        - boolean
                         - null
 
         logic-operator:

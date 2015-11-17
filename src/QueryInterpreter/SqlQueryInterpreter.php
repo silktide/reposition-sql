@@ -41,6 +41,8 @@ class SqlQueryInterpreter implements QueryInterpreterInterface
 
     protected $fields = [];
 
+    protected $identifierDelimiter = "";
+
     /**
      * Switch between PDO style substitution and mysqli escaping
      *
@@ -48,9 +50,10 @@ class SqlQueryInterpreter implements QueryInterpreterInterface
      */
     protected $useSubstitution = true;
 
-    public function __construct(TokenParser $parser, array $queryTypeInterpreters)
+    public function __construct(TokenParser $parser, array $queryTypeInterpreters, $identifierDelimiter)
     {
         $this->tokenParser = $parser;
+        $this->identifierDelimiter = $identifierDelimiter;
         $this->setQueryTypeInterpreters($queryTypeInterpreters);
     }
 
@@ -75,6 +78,7 @@ class SqlQueryInterpreter implements QueryInterpreterInterface
         $this->queryTypeInterpreters = [];
         foreach ($interpreters as $interpreter) {
             if ($interpreter instanceof AbstractSqlQueryTypeInterpreter) {
+                $interpreter->setIdentifiedDelimiter($this->identifierDelimiter);
                 $this->addQueryTypeInterpreter($interpreter);
             }
         }

@@ -23,6 +23,8 @@ abstract class AbstractSqlQueryTypeInterpreter
 
     protected $values = [];
 
+    protected $identifierDelimiter = "";
+
     /**
      * @return string
      */
@@ -33,6 +35,11 @@ abstract class AbstractSqlQueryTypeInterpreter
     public function getValues()
     {
         return $this->values;
+    }
+
+    public function setIdentifiedDelimiter($delimiter)
+    {
+        $this->identifierDelimiter = $delimiter;
     }
 
     /**
@@ -117,10 +124,11 @@ abstract class AbstractSqlQueryTypeInterpreter
 
     protected function renderArbitraryReference($reference, $alias = "")
     {
-        // escape the reference encapsulation character, `
-        $reference = str_replace("`", "\\`", $reference);
+        // escape the identifier delimiter character
+        $d = $this->identifierDelimiter;
+        $reference = str_replace($d, "\\$d", $reference);
         // split and encapsulate reference chains, e.g. database.table.field => `database`.`table`.`field`
-        $sql = "`" . str_replace(".", "`.`", $reference) . "`";
+        $sql = $d . str_replace(".", "$d.$d", $reference) . $d;
         if (!empty($alias)) {
             $sql .= $this->renderAlias($alias);
         }
@@ -129,7 +137,8 @@ abstract class AbstractSqlQueryTypeInterpreter
 
     protected function renderAlias($alias)
     {
-        return " AS `$alias`";
+        $d = $this->identifierDelimiter;
+        return " AS {$d}$alias{$d}";
     }
 
     protected function renderValueParameter($value, $type = null)
