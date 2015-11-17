@@ -24,6 +24,11 @@ services:
     dbAdapter:
         class: Silktide\Reposition\Sql\Storage\PdoAdapter
         arguments:
+            - @credentials
+
+    credentials:
+        class: Silktide\Reposition\Sql\Storage\DbCredentials
+        arguments:
             - %dbDriver%
             - %dbHost%
             - %dbUsername%
@@ -33,7 +38,7 @@ services:
     interpreter:
         class: Silktide\Reposition\Sql\QueryInterpreter\SqlQueryInterpreter
         arguments:
-            - "@silktide_reposition.tokenParser"
+            - @silktide_reposition.tokenParser
             - "#queryTypeInterpreter"
             - %identifierDelimiter%
 
@@ -46,7 +51,7 @@ services:
         class: Silktide\Reposition\Sql\Normaliser\SqlNormaliser
 
     silktide_reposition.defaultStorage:
-        aliasOf: "@storage"
+        aliasOf: @storage
 
     silktide_reposition.defaultNormaliser:
-            aliasOf: "@normaliser"
+        aliasOf: @normaliser
