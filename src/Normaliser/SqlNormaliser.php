@@ -179,13 +179,32 @@ class SqlNormaliser implements NormaliserInterface
                 if (empty($newField)) {
                     continue;
                 }
-                try {
-                    $denormalisedRow[$newField] = (is_array($field))
-                        ? $this->denormaliseData($data, $field, $firstField)
-                        : $row[$field];
-                } catch (NormalisationException $e) {
-                    // ignore this child; record set was probably null. Means there was no child object for the row.
+                if (is_array($field)) {
+                    try {
+                        $denormalisedRow[$newField] = $this->denormaliseData($data, $field, $firstField);
+                    } catch (NormalisationException $e) {
+                        // ignore this child; record set was probably null. Means there was no child object for the row.
+                    }
+                } else {
+                    // handle any JSON values
+                    $fieldValue = $row[$field];
+                    if (is_string($fieldValue)) {
+                        $json = trim($fieldValue);
+                        // only attempt decoding if the trimmed string the starts with [ or {
+                        // JSON *can* start with other values, but we don't want to decode those as such data may
+                        // intentionally be non-JSON
+                        if ($json != "" && ($json[0] == "[" || $json[0] == "{")) {
+                            $json = json_decode($json, true);
+                            if (!empty($json) && json_last_error() == JSON_ERROR_NONE) {
+                                $fieldValue = $json;
+                            }
+                        }
+                    }
+                    $denormalisedRow[$newField] = $fieldValue;
                 }
+
+
+
             }
 
             if ($this->isEmptyEntityRow($denormalisedRow)) {

@@ -205,6 +205,25 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                 ],
                 ["four" => $four, "three" => $three],
                 "one"
+            ],
+            [ // #9 decode valid JSON fields
+                [
+                    ["field1" => '["one", "two", "three", "four"]', "field2" => '{"one": "one", "two": "two", "three": "three", "four": "four"}']
+                ],
+                [
+                    [
+                        "field1" => ["one", "two", "three", "four"],
+                        "field2" => ["one" => "one", "two" => "two", "three" => "three", "four" => "four"],
+                    ]
+                ]
+            ],
+            [ // #10 handle invalid JSON and non-JSON
+                [
+                    ["field1" => '["this": "is", invalid: json]', "field2" => '"this is an encapsulated string"']
+                ],
+                [
+                    ["field1" => '["this": "is", invalid: json]', "field2" => '"this is an encapsulated string"']
+                ]
             ]
         ];
     }
