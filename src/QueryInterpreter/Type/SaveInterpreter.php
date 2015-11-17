@@ -7,6 +7,7 @@ use Silktide\Reposition\Exception\InterpretationException;
 use Silktide\Reposition\QueryBuilder\QueryToken\Entity;
 use Silktide\Reposition\QueryBuilder\QueryToken\Value;
 use Silktide\Reposition\QueryBuilder\TokenSequencerInterface;
+use Silktide\Reposition\Metadata\EntityMetadata;
 
 /**
  * SaveInterpreter
@@ -21,6 +22,8 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
     protected $primaryKey = "";
 
     protected $fieldSql = [];
+
+    protected $relatedProperties = [];
 
     public function supportedQueryType()
     {
@@ -53,6 +56,24 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
             $this->fieldSql = [];
             foreach ($metadata->getFieldNames() as $field) {
                 $this->fieldSql[$field] = $this->renderArbitraryReference($field);
+            }
+            // if any of this entities relationships are one to one, check if we need to set "our" field
+            foreach ($metadata->getRelationships() as $alias => $relationship) {
+                if (
+                    $relationship[EntityMetadata::METADATA_RELATIONSHIP_TYPE] == EntityMetadata::RELATIONSHIP_TYPE_ONE_TO_ONE &&
+                    !empty($relationship[EntityMetadata::METADATA_RELATIONSHIP_OUR_FIELD])
+                ) {
+                    $field = $relationship[EntityMetadata::METADATA_RELATIONSHIP_OUR_FIELD];
+                    $this->fieldSql[$field] = $this->renderArbitraryReference($field);
+                    $theirField = $relationship[EntityMetadata::METADATA_RELATIONSHIP_THEIR_FIELD];
+                    if (empty($theirField)) {
+                        $theirField = "id";
+                    }
+                    $this->relatedProperties[$field] = [
+                        "property" => $relationship[EntityMetadata::METADATA_RELATIONSHIP_PROPERTY],
+                        "theirField" => $theirField
+                    ];
+                }
             }
         }
 
@@ -92,7 +113,13 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
             if (!method_exists($entity, "toArray")) {
                 throw new InterpretationException("Encountered an entity object instance which does not implement 'toArray'");
             }
-            $entity = $entity->toArray();
+            $entityReferences = [];
+            foreach ($this->relatedProperties as $field => $config) {
+                $childGetter = "get" . $this->toStudlyCaps($config["theirField"]);
+                $entityGetter = "get" . $this->toStudlyCaps($config["property"]);
+                $entityReferences[$field] = $entity->{$entityGetter}()->{$childGetter}();
+            }
+            $entity = array_merge($entity->toArray(), $entityReferences);
         }
 
         $sql = "";
