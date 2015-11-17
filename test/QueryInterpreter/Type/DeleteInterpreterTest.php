@@ -25,6 +25,7 @@ class DeleteInterpreterTest extends \PHPUnit_Framework_TestCase
         $tokenSequencer = $this->createMockTokenSequencer($tokens);
 
         $interpreter = new DeleteInterpreter();
+        $interpreter->setIdentifiedDelimiter("`");
 
         $this->assertEquals($expectedSql, $interpreter->interpretQuery($tokenSequencer));
     }

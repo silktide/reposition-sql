@@ -23,6 +23,7 @@ class UpdateInterpreterTest extends \PHPUnit_Framework_TestCase
         $sequencer = $this->createMockTokenSequencer($tokens);
 
         $interpreter = new UpdateInterpreter();
+        $interpreter->setIdentifiedDelimiter("`");
 
         $this->assertEquals($expectedSql, $interpreter->interpretQuery($sequencer));
     }

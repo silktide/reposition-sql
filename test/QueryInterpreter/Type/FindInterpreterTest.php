@@ -30,6 +30,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
         $tokenSequencer = $this->createMockTokenSequencer($tokens, array_pop($includes));
 
         $interpreter = new FindInterpreter();
+        $interpreter->setIdentifiedDelimiter("`");
 
         /** @var TokenSequencerInterface $tokenSequencer */
         $this->assertEquals($expectedSql, $interpreter->interpretQuery($tokenSequencer));
@@ -186,6 +187,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
         $tokenSequencer = $this->createMockTokenSequencer($tokens, $targetMetadata, $includes);
 
         $interpreter = new FindInterpreter();
+        $interpreter->setIdentifiedDelimiter("`");
 
         /** @var TokenSequencerInterface $tokenSequencer */
         $this->assertEquals($expectedSql, $interpreter->interpretQuery($tokenSequencer));

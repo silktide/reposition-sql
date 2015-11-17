@@ -42,6 +42,7 @@ class SaveInterpreterTest extends \PHPUnit_Framework_TestCase
         $tokenSequencer->shouldReceive("getEntityMetadata")->andReturn($metadata);
 
         $interpreter = new SaveInterpreter();
+        $interpreter->setIdentifiedDelimiter("`");
 
         $this->assertEquals($expectedSql, $interpreter->interpretQuery($tokenSequencer));
     }
