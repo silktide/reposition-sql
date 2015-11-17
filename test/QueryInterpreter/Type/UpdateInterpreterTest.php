@@ -18,7 +18,7 @@ class UpdateInterpreterTest extends \PHPUnit_Framework_TestCase
      * @param array $tokens
      * @param $expectedSql
      */
-    public function testInterpretation(array $tokens, $expectedSql)
+    public function testInterpretation(array $tokens, $expectedSql, $expectedValues = [])
     {
         $sequencer = $this->createMockTokenSequencer($tokens);
 
@@ -26,6 +26,12 @@ class UpdateInterpreterTest extends \PHPUnit_Framework_TestCase
         $interpreter->setIdentifiedDelimiter("`");
 
         $this->assertEquals($expectedSql, $interpreter->interpretQuery($sequencer));
+
+        $values = $interpreter->getValues();
+        foreach ($expectedValues as $key => $expected) {
+            $this->assertArrayHasKey($key, $values);
+            $this->assertEquals($expected, $values[$key]);
+        }
     }
 
     protected function createMockTokenSequencer(array $tokens)
@@ -104,6 +110,19 @@ class UpdateInterpreterTest extends \PHPUnit_Framework_TestCase
                     ["token", "close"]
                 ],
                 "UPDATE `{$this->collection}` SET `field1` = MAX(`field2`)"
+            ],
+            [ #4 update one entity with array data
+                [
+                    ["reference", "field", "field1", ""],
+                    ["value", "operator", "="],
+                    ["value", "array", ["one", "two", "three"]],
+                    ["token", "where"],
+                    ["reference", "field", "id", ""],
+                    ["value", "operator", "="],
+                    ["value", "int", "1"]
+                ],
+                "UPDATE `{$this->collection}` SET `field1` = :array_0 WHERE `id` = :int_1",
+                ["array_0" => '["one","two","three"]']
             ]
         ];
     }

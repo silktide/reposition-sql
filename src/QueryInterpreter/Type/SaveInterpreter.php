@@ -126,6 +126,8 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
             $type = Value::TYPE_NULL;
         } elseif (is_bool($value)) {
             $type = Value::TYPE_BOOL;
+        } elseif (is_array($value)) {
+            $type = Value::TYPE_ARRAY;
         }
 
         return $this->renderValueParameter($value, $type);

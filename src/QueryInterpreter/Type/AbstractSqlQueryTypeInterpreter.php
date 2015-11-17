@@ -89,9 +89,12 @@ abstract class AbstractSqlQueryTypeInterpreter
         switch ($type) {
             case Value::TYPE_NULL:
             case Value::TYPE_BOOL:
+            case Value::TYPE_BOOLEAN:
             case Value::TYPE_STRING:
             case Value::TYPE_INT:
+            case Value::TYPE_INTEGER:
             case Value::TYPE_FLOAT:
+            case Value::TYPE_ARRAY:
                 return $this->renderValueParameter($value, $type);
             case "function":
                 // translate function name
@@ -152,6 +155,10 @@ abstract class AbstractSqlQueryTypeInterpreter
         }
         if ($type == Value::TYPE_BOOL) {
             return $value? "TRUE": "FALSE";
+        }
+        // encode any array data to JSON
+        if (is_array($value)) {
+            $value = json_encode($value);
         }
 
         // create value reference ID for replacing
