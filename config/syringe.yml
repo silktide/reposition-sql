@@ -47,6 +47,21 @@ services:
         tags:
             - "queryTypeInterpreter"
 
+    saveInterpreter:
+        class: Silktide\Reposition\Sql\QueryInterpreter\Type\SaveInterpreter
+        tags:
+            - "queryTypeInterpreter"
+
+    updateInterpreter:
+        class: Silktide\Reposition\Sql\QueryInterpreter\Type\UpdateInterpreter
+        tags:
+            - "queryTypeInterpreter"
+
+    deleteInterpreter:
+        class: Silktide\Reposition\Sql\QueryInterpreter\Type\DeleteInterpreter
+        tags:
+            - "queryTypeInterpreter"
+
     normaliser:
         class: Silktide\Reposition\Sql\Normaliser\SqlNormaliser
 
