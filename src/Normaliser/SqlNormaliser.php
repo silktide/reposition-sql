@@ -195,7 +195,7 @@ class SqlNormaliser implements NormaliserInterface
                         // intentionally be non-JSON
                         if ($json != "" && ($json[0] == "[" || $json[0] == "{")) {
                             $json = json_decode($json, true);
-                            if (!empty($json) && json_last_error() == JSON_ERROR_NONE) {
+                            if ($json !== false && json_last_error() == JSON_ERROR_NONE) {
                                 $fieldValue = $json;
                             }
                         }
