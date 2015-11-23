@@ -61,6 +61,13 @@ class SqlStorage implements StorageInterface
 
         $statement = $this->database->prepare($compiledQuery->getQuery());
         $statement->execute($compiledQuery->getArguments());
+
+        // check for errors (some drivers don't throw exceptions on SQL errors)
+        $errorInfo = $statement->errorInfo();
+        if ($errorInfo[0] != "00000") { // ANSI SQL error code for "success"
+            throw new \PDOException($errorInfo[0] . " (" . $errorInfo[1] . "): " . $errorInfo[2]);
+        }
+
         $data = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
         $options = [
