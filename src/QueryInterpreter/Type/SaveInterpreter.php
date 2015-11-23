@@ -133,7 +133,10 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
                 $entityGetter = "get" . $this->toStudlyCaps($config["property"]);
                 $entityReferences[$field] = $entity->{$entityGetter}()->{$childGetter}();
             }
-            $entity = array_merge($entity->toArray(), $entityReferences);
+            // convert entity to an array with keys in underscore case
+            $entityArray = $this->convertEntityKeysToUnderscores($entity->toArray());
+            // merge the entity array with the relationship array
+            $entity = array_merge($entityArray, $entityReferences);
         }
 
         $sql = "";
@@ -154,6 +157,19 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
             $sql = implode(", ", $kvps);
         }
         return $sql;
+    }
+
+    protected function convertEntityKeysToUnderscores(array $entity)
+    {
+        $underscores = [];
+        foreach ($entity as $field => $value) {
+            $underscoreField = $this->toSplitCase($field);
+            if (is_array($value)) {
+                $value = $this->convertEntityKeysToUnderscores($value);
+            }
+            $underscores[$underscoreField] = $value;
+        }
+        return $underscores;
     }
 
     protected function renderEntityField($field, $entity)
