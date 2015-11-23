@@ -5,6 +5,7 @@ namespace Silktide\Reposition\Sql\Test\QueryInterpreter\Type;
 
 use Silktide\Reposition\Metadata\EntityMetadata;
 use Silktide\Reposition\QueryBuilder\TokenSequencerInterface;
+use Silktide\Reposition\QueryInterpreter\CompiledQuery;
 use Silktide\Reposition\Sql\QueryInterpreter\Type\SaveInterpreter;
 
 /**
@@ -331,6 +332,62 @@ class SaveInterpreterTest extends \PHPUnit_Framework_TestCase
                 "UPDATE `{$this->collection}` SET `field_1` = :value_0, `child_id` = :value_1 WHERE `id` = :searchId",
                 ["value_1" => $this->childId]
             ],
+        ];
+    }
+
+    /**
+     * @dataProvider nonIncrementingPkProvider
+     *
+     * @param array $entity
+     * @param array $fields
+     * @param $expectedQueryType
+     * @param array $options
+     * @throws \Silktide\Reposition\Exception\InterpretationException
+     */
+    public function testNonAutoIncrementingPrimaryKey(array $entity, array $fields, $expectedQueryType, array $options = [])
+    {
+        /** @var TokenSequencerInterface $tokenSequencer */
+        $token = \Mockery::mock("Silktide\\Reposition\\QueryBuilder\\QueryToken\\Entity");
+        $token->shouldReceive("getType")->andReturn("entity");
+        $token->shouldReceive("getEntity")->andReturn($entity);
+        $sequence[] = $token;
+        $sequence[] = false;
+
+        $metadata = \Mockery::mock("Silktide\\Reposition\\Metadata\\EntityMetadata");
+        $metadata->shouldReceive("getCollection")->andReturn($this->collection);
+        $metadata->shouldReceive("getPrimaryKey")->andReturn("id");
+        $metadata->shouldReceive("getPrimaryKeyMetadata")->andReturn([EntityMetadata::METADATA_FIELD_AUTO_INCREMENTING => false]);
+        $metadata->shouldReceive("getFieldNames")->andReturn($fields);
+        $metadata->shouldReceive("getRelationships")->andReturn([]);
+
+        $tokenSequencer = \Mockery::mock("Silktide\\Reposition\\QueryBuilder\\TokenSequencerInterface");
+        $tokenSequencer->shouldReceive("getNextToken")->andReturnValues($sequence);
+        $tokenSequencer->shouldReceive("getEntityMetadata")->andReturn($metadata);
+        $tokenSequencer->shouldReceive("getOptions")->andReturn($options);
+
+        $interpreter = new SaveInterpreter();
+        $interpreter->setIdentifiedDelimiter("`");
+
+        $query = $interpreter->interpretQuery($tokenSequencer);
+        //$query = new CompiledQuery();
+
+        $this->assertContains(strtoupper($expectedQueryType), strtoupper($query));
+    }
+
+    public function nonIncrementingPkProvider()
+    {
+        return [
+            [
+                ["id" => "string", "field1" => "value"],
+                ["id", "field1"],
+                "insert"
+            ],
+            [
+                ["id" => "string", "field1" => "value"],
+                ["id", "field1"],
+                "update",
+                ["saveType" => "update"]
+            ]
         ];
     }
 
