@@ -43,12 +43,14 @@ class SaveInterpreterTest extends \PHPUnit_Framework_TestCase
         $metadata = \Mockery::mock("Silktide\\Reposition\\Metadata\\EntityMetadata");
         $metadata->shouldReceive("getCollection")->andReturn($this->collection);
         $metadata->shouldReceive("getPrimaryKey")->andReturn("id");
+        $metadata->shouldReceive("getPrimaryKeyMetadata")->andReturn([EntityMetadata::METADATA_FIELD_AUTO_INCREMENTING => true]);
         $metadata->shouldReceive("getFieldNames")->andReturn($fields);
         $metadata->shouldReceive("getRelationships")->andReturn([]);
 
         $tokenSequencer = \Mockery::mock("Silktide\\Reposition\\QueryBuilder\\TokenSequencerInterface");
         $tokenSequencer->shouldReceive("getNextToken")->andReturnValues($sequence);
         $tokenSequencer->shouldReceive("getEntityMetadata")->andReturn($metadata);
+        $tokenSequencer->shouldReceive("getOptions")->andReturn([]);
 
         $interpreter = new SaveInterpreter();
         $interpreter->setIdentifiedDelimiter("`");
@@ -228,12 +230,14 @@ class SaveInterpreterTest extends \PHPUnit_Framework_TestCase
         $metadata = \Mockery::mock("Silktide\\Reposition\\Metadata\\EntityMetadata");
         $metadata->shouldReceive("getCollection")->andReturn($this->collection);
         $metadata->shouldReceive("getPrimaryKey")->andReturn("id");
+        $metadata->shouldReceive("getPrimaryKeyMetadata")->andReturn([EntityMetadata::METADATA_FIELD_AUTO_INCREMENTING => true]);
         $metadata->shouldReceive("getFieldNames")->andReturn(["field_1"]);
         $metadata->shouldReceive("getRelationships")->andReturn($relationships);
 
         $tokenSequencer = \Mockery::mock("Silktide\\Reposition\\QueryBuilder\\TokenSequencerInterface");
         $tokenSequencer->shouldReceive("getNextToken")->andReturnValues($sequence);
         $tokenSequencer->shouldReceive("getEntityMetadata")->andReturn($metadata);
+        $tokenSequencer->shouldReceive("getOptions")->andReturn([]);
 
         $interpreter = new SaveInterpreter();
         $interpreter->setIdentifiedDelimiter("`");
