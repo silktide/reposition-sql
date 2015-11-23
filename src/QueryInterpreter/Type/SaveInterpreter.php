@@ -44,7 +44,7 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
         if (is_object($entity)) {
             $pkGetter = "get" . $this->toStudlyCaps($this->primaryKey);
             if (!method_exists($entity, $pkGetter)) {
-                throw new InterpretationException("Could not get the primary key '{$this->primaryKey}'. The method '$pkGetter' does not exist on the entity");
+                throw new InterpretationException("Could not get the primary key '{$this->primaryKey}'. The method '$pkGetter' does not exist on the entity (" . get_class($entity) . ")");
             }
             $id = $entity->{$pkGetter}();
         } else {
@@ -79,7 +79,21 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
 
         $collection = $this->renderArbitraryReference($metadata->getCollection());
 
-        if (empty($id)) {
+        $options = $query->getOptions();
+
+        $pkMetadata = $metadata->getPrimaryKeyMetadata();
+
+        // this is an insert if, we don't have a value for the ID (auto incrementing PK) or the PK isn't auto incrementing
+        // and the query does not specifically request us to update
+        $isInsert = empty($id) || (
+                $pkMetadata[EntityMetadata::METADATA_FIELD_AUTO_INCREMENTING] == false &&
+                (
+                    empty($options["saveType"]) ||
+                    $options["saveType"] != "update"
+                )
+            );
+
+        if ($isInsert) {
             // insert;
             $this->sqlCommand = "insert";
             $sql = "INSERT INTO $collection";
