@@ -32,6 +32,7 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
 
     public function interpretQuery(TokenSequencerInterface $query)
     {
+        $this->reset();
         $this->query = $query;
 
         $metadata = $this->query->getEntityMetadata();

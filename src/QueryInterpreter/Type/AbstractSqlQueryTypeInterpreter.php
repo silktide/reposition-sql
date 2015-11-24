@@ -32,6 +32,13 @@ abstract class AbstractSqlQueryTypeInterpreter
 
     abstract public function interpretQuery(TokenSequencerInterface $query);
 
+    protected function reset()
+    {
+        $this->fields = [];
+        $this->tables = [];
+        $this->values = [];
+    }
+
     public function getValues()
     {
         return $this->values;

@@ -18,6 +18,7 @@ class UpdateInterpreter extends AbstractSqlQueryTypeInterpreter
 
     public function interpretQuery(TokenSequencerInterface $query)
     {
+        $this->reset();
         $this->query = $query;
 
         $sql = "UPDATE " . $this->renderArbitraryReference($this->query->getEntityMetadata()->getCollection()) . " SET ";

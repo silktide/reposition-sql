@@ -20,7 +20,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 
     public function interpretQuery(TokenSequencerInterface $query)
     {
-
+        $this->reset();
         $this->query = $query;
 
         $includes = $query->getIncludes();

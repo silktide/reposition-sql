@@ -17,6 +17,7 @@ class DeleteInterpreter extends AbstractSqlQueryTypeInterpreter
 
     public function interpretQuery(TokenSequencerInterface $query)
     {
+        $this->reset();
         $this->query = $query;
 
         $sql = "DELETE FROM " . $this->renderArbitraryReference($query->getEntityMetadata()->getCollection());
