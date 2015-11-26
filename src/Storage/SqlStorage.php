@@ -65,7 +65,7 @@ class SqlStorage implements StorageInterface
         // check for errors (some drivers don't throw exceptions on SQL errors)
         $errorInfo = $statement->errorInfo();
         if ($errorInfo[0] != "00000") { // ANSI SQL error code for "success"
-            $e = new \PDOException($errorInfo[0] . " (" . $errorInfo[1] . "): " . $errorInfo[2]);
+            $e = new \PDOException($errorInfo[0] . " (" . $errorInfo[1] . "): " . $errorInfo[2] . ", SQL: " . $compiledQuery->getQuery());
             $e->errorInfo = $errorInfo;
             throw $e;
         }
