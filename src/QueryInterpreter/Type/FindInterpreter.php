@@ -351,7 +351,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
                 $largestValue = "0xFFFF";
             }
 
-            $sort[] = "IFNULL(" . $this->renderArbitraryReference($this->getSelectFieldAlias($alias. "." . $primaryKeys[$alias])) . ", $largestValue)";
+            $sort[] = "COALESCE(" . $this->renderArbitraryReference($this->getSelectFieldAlias($alias. "." . $primaryKeys[$alias])) . ", $largestValue)";
         }
         return $sort;
     }
