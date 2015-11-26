@@ -15,6 +15,8 @@ class SqlNormaliser implements NormaliserInterface
      */
     protected $metadataProvider;
 
+    protected $primaryKeyFields = [];
+
     /**
      * format data into the DB format
      *
@@ -90,6 +92,9 @@ class SqlNormaliser implements NormaliserInterface
             throw new NormalisationException("The collection '$collection' was not found in the fields array for this record set: '" . implode("', '", array_keys($prefixedFields)) . "'");
         }
 
+        // reset primary key fields
+        $this->primaryKeyFields = [];
+
         $this->createFieldTree($prefixedFields, $entityMap, $collection, $options["entity"]);
 
         reset($data);
@@ -101,6 +106,13 @@ class SqlNormaliser implements NormaliserInterface
     protected function createFieldTree(array &$fields, array $entityMap, $alias, $entity)
     {
         $metadata = $this->metadataProvider->getEntityMetadata($entity);
+
+        // store the primary key field for this entity
+        $primaryKey = $metadata->getPrimaryKey();
+        if (!empty($fields[$alias][$primaryKey])) {
+            $this->primaryKeyFields[$fields[$alias][$primaryKey]] = true;
+        }
+
         $availableJoins = $metadata->getRelationships();
 
         foreach ($entityMap as $childAlias => $childMetadata) {
@@ -160,7 +172,7 @@ class SqlNormaliser implements NormaliserInterface
         // find the first field eligible to be the new row field for any child relationships
         $firstField = null;
         foreach ($fields as $field) {
-            if (!is_array($field)) {
+            if (!empty($this->primaryKeyFields[$field])) {
                 $firstField = $field;
                 break;
             }
