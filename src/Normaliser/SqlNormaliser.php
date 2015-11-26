@@ -45,6 +45,17 @@ class SqlNormaliser implements NormaliserInterface
             return $data;
         }
 
+        if (!isset($options["entity"])) {
+            throw new NormalisationException("Cannot denormalise data without knowing the main entity class");
+        }
+        if (!isset($options["metadataProvider"])) {
+            throw new NormalisationException("Cannot denormalise data without a metadata provider");
+        }
+
+        /** @var EntityMetadataProviderInterface $metadataProvider */
+        $this->metadataProvider = $options["metadataProvider"];
+        $metadata = $this->metadataProvider->getEntityMetadata($options["entity"]);
+
         // split fields based on prefix
         $prefixedFields = [];
         foreach ($data[0] as $field => $value) {
@@ -64,28 +75,20 @@ class SqlNormaliser implements NormaliserInterface
         // handle case where only 1 prefix is present
         if (count($prefixedFields) == 1) {
             $fields = array_pop($prefixedFields);
+            $primaryKey = $metadata->getPrimaryKey();
+            if (isset($fields[$primaryKey])) {
+                $this->primaryKeyFields = [$fields[$primaryKey] => true];
+            }
             return $this->denormaliseData($data, $fields, "");
         }
 
         // complex result set
-
-        if (!isset($options["entity"])) {
-            throw new NormalisationException("Cannot denormalise data without knowing the main entity class");
-        }
-
         if (!isset($options["entityMap"])) {
             throw new NormalisationException("Cannot denormalise data without an entity map");
         }
 
-        if (!isset($options["metadataProvider"])) {
-            throw new NormalisationException("Cannot denormalise data without a metadata provider");
-        }
-
-        /** @var EntityMetadataProviderInterface $metadataProvider */
-        $this->metadataProvider = $options["metadataProvider"];
         $entityMap = $options["entityMap"];
 
-        $metadata = $this->metadataProvider->getEntityMetadata($options["entity"]);
         $collection = $metadata->getCollection();
 
         if (empty($prefixedFields[$collection])) {
