@@ -204,7 +204,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
             foreach ($templateJoinConditions as $collection => $condition) {
                 // if this is a collection that were including and that isn't in the collection list, set it's join condition to "[primary key] = NULL"
                 if (isset($collections[$collection]) && !in_array($collection, $collectionList)) {
-                    $condition = $this->renderArbitraryReference($collection . "." . $primaryKeys[$collection]) . " IS NULL";
+                    $condition = "FALSE";
                 }
                 $replacements["%{$collection}Condition%"] = $condition;
             }
