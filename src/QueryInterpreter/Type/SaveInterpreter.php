@@ -55,8 +55,11 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
         // cache the field references if required
         if (empty($this->fieldSql)) {
             $this->fieldSql = [];
+            $pkField = $this->toSplitCase($this->primaryKey);
             foreach ($metadata->getFieldNames() as $field) {
-                $this->fieldSql[$field] = $this->renderArbitraryReference($field);
+                if ($field != $pkField) {
+                    $this->fieldSql[$field] = $this->renderArbitraryReference($field);
+                }
             }
             // if any of this entities relationships are one to one, check if we need to set "our" field
             foreach ($metadata->getRelationships() as $alias => $relationship) {
