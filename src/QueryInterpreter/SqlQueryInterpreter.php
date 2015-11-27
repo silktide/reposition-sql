@@ -120,6 +120,7 @@ class SqlQueryInterpreter implements QueryInterpreterInterface
         $compiledQuery = new CompiledQuery();
         $compiledQuery->setQuery($selectedInterpreter->interpretQuery($query));
         $compiledQuery->setArguments($selectedInterpreter->getValues());
+        $compiledQuery->setPrimaryKeySequence($selectedInterpreter->getPrimaryKeySequence());
 
         return $compiledQuery;
     }
