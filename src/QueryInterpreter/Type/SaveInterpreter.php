@@ -112,6 +112,8 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
 
             $sql .= implode(", ", $entities);
 
+            $this->primaryKeySequence = $collection . "_" . $metadata->getPrimaryKey() . "_seq";
+
         } else {
             // update
             $this->sqlCommand = "update";

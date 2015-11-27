@@ -25,6 +25,8 @@ abstract class AbstractSqlQueryTypeInterpreter
 
     protected $identifierDelimiter = "";
 
+    protected $primaryKeySequence = "";
+
     /**
      * @return string
      */
@@ -47,6 +49,11 @@ abstract class AbstractSqlQueryTypeInterpreter
     public function setIdentifiedDelimiter($delimiter)
     {
         $this->identifierDelimiter = $delimiter;
+    }
+
+    public function getPrimaryKeySequence()
+    {
+        return $this->primaryKeySequence;
     }
 
     /**
