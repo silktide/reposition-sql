@@ -61,6 +61,7 @@ class SqlStorage implements StorageInterface
 
         $statement = $this->database->prepare($compiledQuery->getQuery());
         $statement->execute($compiledQuery->getArguments());
+        $newId = $this->database->getLastInsertId($compiledQuery->getPrimaryKeySequence());
 
         // check for errors (some drivers don't throw exceptions on SQL errors)
         $errorInfo = $statement->errorInfo();
@@ -81,6 +82,9 @@ class SqlStorage implements StorageInterface
         if ($this->hydrator instanceof HydratorInterface && !empty($entityClass)) {
             $response = $this->hydrator->hydrateAll($data, $entityClass, $options);
         } else  {
+            if (!empty($newId)) {
+                $data["id"] = $newId;
+            }
             $response = $data;
         }
         return $response;

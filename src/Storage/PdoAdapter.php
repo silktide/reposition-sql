@@ -62,6 +62,11 @@ class PdoAdapter
         return $this->pdo->prepare($statement, $driverOptions);
     }
 
+    public function getLastInsertId($sequence = "")
+    {
+        return $this->pdo->lastInsertId($sequence);
+    }
+
     /**
      * As PDO is unable to accept labels (table names, column names, etc...) as parameters, we
      * have to prepare them manually. This is poor, PDO needs to up it's game.
