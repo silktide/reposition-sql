@@ -83,7 +83,7 @@ class SqlStorage implements StorageInterface
             $response = $this->hydrator->hydrateAll($data, $entityClass, $options);
         } else  {
             if (!empty($newId)) {
-                $data["id"] = $newId;
+                $data[StorageInterface::NEW_INSERT_ID_RETURN_FIELD] = $newId;
             }
             $response = $data;
         }
