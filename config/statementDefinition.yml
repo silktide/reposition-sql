@@ -130,6 +130,7 @@ parameters:
                     type:
                         - operator-expression
                         - between-expression
+                        - in-expression
                 optional: true
             -
                 name: close
@@ -191,6 +192,18 @@ parameters:
                 name: and
             -
                 type: operand
+
+        in-expression:
+            -
+                name: operator
+                value: in
+            -
+                name: open
+            -
+                type: value
+                multiple: true
+            -
+                name: close
 
         operand:
             -
