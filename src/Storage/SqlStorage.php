@@ -92,7 +92,7 @@ class SqlStorage implements StorageInterface
     {
         $errorInfo = $statement->errorInfo();
         if ($errorInfo[0] != "00000") { // ANSI SQL error code for "success"
-            $e = new \PDOException($prefix . $errorInfo[0] . " (" . $errorInfo[1] . "): " . $errorInfo[2] . ", SQL: " . $originalSql);
+            $e = new \PDOException($prefix . $errorInfo[0] . " (" . $errorInfo[1] . "): " . $errorInfo[2] . ",\nSQL: " . $originalSql);
             $e->errorInfo = $errorInfo;
             throw $e;
         }
