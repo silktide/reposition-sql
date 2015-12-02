@@ -52,32 +52,29 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
             $id = isset($entity[$this->primaryKey])? $entity[$this->primaryKey]: null;
         }
 
-        // cache the field references if required
-        if (empty($this->fieldSql)) {
-            $this->fieldSql = [];
-            $pkField = $this->toSplitCase($this->primaryKey);
-            foreach ($metadata->getFieldNames() as $field) {
-                if ($field != $pkField) {
-                    $this->fieldSql[$field] = $this->renderArbitraryReference($field);
-                }
+        $this->fieldSql = [];
+        $pkField = $this->toSplitCase($this->primaryKey);
+        foreach ($metadata->getFieldNames() as $field) {
+            if ($field != $pkField) {
+                $this->fieldSql[$field] = $this->renderArbitraryReference($field);
             }
-            // if any of this entities relationships are one to one, check if we need to set "our" field
-            foreach ($metadata->getRelationships() as $alias => $relationship) {
-                if (
-                    $relationship[EntityMetadata::METADATA_RELATIONSHIP_TYPE] == EntityMetadata::RELATIONSHIP_TYPE_ONE_TO_ONE &&
-                    !empty($relationship[EntityMetadata::METADATA_RELATIONSHIP_OUR_FIELD])
-                ) {
-                    $field = $relationship[EntityMetadata::METADATA_RELATIONSHIP_OUR_FIELD];
-                    $this->fieldSql[$field] = $this->renderArbitraryReference($field);
-                    $theirField = $relationship[EntityMetadata::METADATA_RELATIONSHIP_THEIR_FIELD];
-                    if (empty($theirField)) {
-                        $theirField = "id";
-                    }
-                    $this->relatedProperties[$field] = [
-                        "property" => $relationship[EntityMetadata::METADATA_RELATIONSHIP_PROPERTY],
-                        "theirField" => $theirField
-                    ];
+        }
+        // if any of this entities relationships are one to one, check if we need to set "our" field
+        foreach ($metadata->getRelationships() as $alias => $relationship) {
+            if (
+                $relationship[EntityMetadata::METADATA_RELATIONSHIP_TYPE] == EntityMetadata::RELATIONSHIP_TYPE_ONE_TO_ONE &&
+                !empty($relationship[EntityMetadata::METADATA_RELATIONSHIP_OUR_FIELD])
+            ) {
+                $field = $relationship[EntityMetadata::METADATA_RELATIONSHIP_OUR_FIELD];
+                $this->fieldSql[$field] = $this->renderArbitraryReference($field);
+                $theirField = $relationship[EntityMetadata::METADATA_RELATIONSHIP_THEIR_FIELD];
+                if (empty($theirField)) {
+                    $theirField = "id";
                 }
+                $this->relatedProperties[$field] = [
+                    "property" => $relationship[EntityMetadata::METADATA_RELATIONSHIP_PROPERTY],
+                    "theirField" => $theirField
+                ];
             }
         }
 
