@@ -61,15 +61,13 @@ class SqlStorage implements StorageInterface
 
         $statement = $this->database->prepare($compiledQuery->getQuery());
         $statement->execute($compiledQuery->getArguments());
-        $newId = $this->database->getLastInsertId($compiledQuery->getPrimaryKeySequence());
 
         // check for errors (some drivers don't throw exceptions on SQL errors)
-        $errorInfo = $statement->errorInfo();
-        if ($errorInfo[0] != "00000") { // ANSI SQL error code for "success"
-            $e = new \PDOException($errorInfo[0] . " (" . $errorInfo[1] . "): " . $errorInfo[2] . ", SQL: " . $compiledQuery->getQuery());
-            $e->errorInfo = $errorInfo;
-            throw $e;
-        }
+        $this->checkForSqlErrors($statement, "Query - ", $compiledQuery->getQuery());
+
+        // get the new ID and check for errors again
+        $newId = $this->database->getLastInsertId($compiledQuery->getPrimaryKeySequence());
+        $this->checkForSqlErrors($statement, "Insert ID - ", $compiledQuery->getQuery());
 
         $data = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -88,6 +86,16 @@ class SqlStorage implements StorageInterface
             $response = $data;
         }
         return $response;
+    }
+
+    protected function checkForSqlErrors(\PDOStatement $statement, $prefix, $originalSql)
+    {
+        $errorInfo = $statement->errorInfo();
+        if ($errorInfo[0] != "00000") { // ANSI SQL error code for "success"
+            $e = new \PDOException($prefix . $errorInfo[0] . " (" . $errorInfo[1] . "): " . $errorInfo[2] . ", SQL: " . $originalSql);
+            $e->errorInfo = $errorInfo;
+            throw $e;
+        }
     }
 
 }
