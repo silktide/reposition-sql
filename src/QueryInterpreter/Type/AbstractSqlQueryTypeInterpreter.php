@@ -122,6 +122,11 @@ abstract class AbstractSqlQueryTypeInterpreter
                     $value = $nameMap[$value];
                 }
                 break;
+            case "operator":
+                if ($token->getValue() == "in") {
+                    return $this->renderInCondition();
+                }
+                break;
         }
 
         // this token is an sql keyword or operator, so render it's value directly
@@ -281,6 +286,24 @@ abstract class AbstractSqlQueryTypeInterpreter
             throw new QueryException("Unexpected end of token sequence. Expecting 'close parentheses' token for a function: $sql");
         }
         $sql .= $this->renderToken($token); // close parentheses
+        return $sql;
+    }
+
+    protected function renderInCondition()
+    {
+        $sql = "IN ";
+        $sql .= $this->renderToken($this->query->getNextToken()); // open
+        $list = [];
+        while (($token = $this->query->getNextToken()) && $token->getType() != "close") {
+            $list[] = $this->renderToken($token);
+        }
+
+        $sql .= implode(", ", $list);
+
+        if (!empty($token)) {
+            $sql .= $this->renderToken($token); // close
+        }
+
         return $sql;
     }
 
