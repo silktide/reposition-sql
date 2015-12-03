@@ -134,7 +134,10 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
             foreach ($this->relatedProperties as $field => $config) {
                 $childGetter = "get" . $this->toStudlyCaps($config["theirField"]);
                 $entityGetter = "get" . $this->toStudlyCaps($config["property"]);
-                $entityReferences[$field] = $entity->{$entityGetter}()->{$childGetter}();
+                $relatedEntity = $entity->{$entityGetter}();
+                if (is_object($relatedEntity) && method_exists($relatedEntity, $childGetter)) {
+                    $entityReferences[$field] = $relatedEntity->$childGetter();
+                }
             }
             // convert entity to an array with keys in underscore case
             $entityArray = $this->convertEntityKeysToUnderscores($entity->toArray());
