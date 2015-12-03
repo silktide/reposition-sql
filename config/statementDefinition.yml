@@ -225,7 +225,7 @@ parameters:
                         - float
                         - bool
                         - boolean
-                        - null
+                        - "null"
 
         logic-operator:
             -
