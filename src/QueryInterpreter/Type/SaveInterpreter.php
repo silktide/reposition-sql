@@ -193,4 +193,12 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
         return $this->renderValueParameter($value, $type);
     }
 
+    protected function reset()
+    {
+        parent::reset();
+        $this->fieldSql = [];
+        $this->relatedProperties = [];
+        $this->sqlCommand = null;
+    }
+
 }
