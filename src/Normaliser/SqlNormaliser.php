@@ -175,7 +175,7 @@ class SqlNormaliser implements NormaliserInterface
         // find the first field eligible to be the new row field for any child relationships
         $firstField = null;
         foreach ($fields as $field) {
-            if (!empty($this->primaryKeyFields[$field])) {
+            if (!is_array($field) && !empty($this->primaryKeyFields[$field])) {
                 $firstField = $field;
                 break;
             }
