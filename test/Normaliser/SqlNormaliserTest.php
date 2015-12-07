@@ -18,7 +18,7 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
      * @param array $entityMap
      * @param string $thisEntity
      */
-    public function testDenormalisation(array $dataSet, array $expectedData, array $entityMap = [], $thisEntity = "")
+    public function testDenormalisation(array $dataSet, array $expectedData, array $entityMap = [], $thisEntity = "one")
     {
         $type = EntityMetadata::METADATA_RELATIONSHIP_TYPE;
         $propField = EntityMetadata::METADATA_RELATIONSHIP_PROPERTY;
@@ -26,34 +26,47 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
 
         $relationships = [
             "one" => [
-                "two" => [
-                    $type => $o2m,
-                    $propField => "twos"
+                "children" => [
+                    "two" => [
+                        $type => $o2m,
+                        $propField => "twos"
+                    ],
+                    "three" => [
+                        $type => $o2m,
+                        $propField => "threes"
+                    ]
                 ],
-                "three" => [
-                    $type => $o2m,
-                    $propField => "threes"
-                ]
+                "primaryKey" => "field1"
             ],
-            "two" => [],
+            "two" => [
+                "children" => [],
+                "primaryKey" => "field3"
+            ],
             "three" => [
-                "four" => [
-                    $type => $o2m,
-                    $propField => "fours"
+                "children" => [
+                    "four" => [
+                        $type => $o2m,
+                        $propField => "fours"
+                    ],
+                    "two" => [
+                        $type => $o2m,
+                        $propField => "twos"
+                    ]
                 ],
-                "two" => [
-                    $type => $o2m,
-                    $propField => "twos"
-                ]
+                "primaryKey" => "field5"
             ],
-            "four" => []
+            "four" => [
+                "children" => [],
+                "primaryKey" => "field3"
+            ]
         ];
 
         $this->metadataMocks = [];
-        foreach ($relationships as $entity => $children) {
+        foreach ($relationships as $entity => $meta) {
             $metadataMock = \Mockery::mock("Silktide\\Reposition\\Metadata\\EntityMetadata");
             $metadataMock->shouldReceive("getCollection")->andReturn($entity);
-            $metadataMock->shouldReceive("getRelationships")->andReturn($children);
+            $metadataMock->shouldReceive("getRelationships")->andReturn($meta["children"]);
+            $metadataMock->shouldReceive("getPrimaryKey")->andReturn($meta["primaryKey"]);
             $this->metadataMocks[$entity] = $metadataMock;
         }
 
@@ -86,14 +99,17 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
         $two = \Mockery::mock("Silktide\\Reposition\\Metadata\\EntityMetadata");
         $two->shouldReceive("getEntity")->andReturn("two");
         $two->shouldReceive("getCollection")->andReturn("two");
+        $two->shouldReceive("getPrimaryKey")->andReturn("field3");
 
         $three = \Mockery::mock("Silktide\\Reposition\\Metadata\\EntityMetadata");
         $three->shouldReceive("getEntity")->andReturn("three");
         $three->shouldReceive("getCollection")->andReturn("three");
+        $three->shouldReceive("getPrimaryKey")->andReturn("field5");
 
         $four = \Mockery::mock("Silktide\\Reposition\\Metadata\\EntityMetadata");
         $four->shouldReceive("getEntity")->andReturn("four");
         $four->shouldReceive("getCollection")->andReturn("four");
+        $four->shouldReceive("getPrimaryKey")->andReturn("field3");
 
         return [
             [ // #0 simplest mapping possible
