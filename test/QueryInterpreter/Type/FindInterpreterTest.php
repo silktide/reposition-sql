@@ -283,7 +283,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id` " .
                     "FROM `one` " .
                         "LEFT JOIN `two` ON ( `one`.`one_id` = `two`.`one_id`) " .
-                        "LEFT JOIN `three` ON (`three`.`id` IS NULL) " .
+                        "LEFT JOIN `three` ON (FALSE) " .
                     "WHERE `one`.`field1` BETWEEN :int_0 AND :int_1 " .
                     "UNION " .
                     "SELECT " .
@@ -291,10 +291,10 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
                         "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id` " .
                     "FROM `one` " .
-                        "LEFT JOIN `two` ON (`two`.`id` IS NULL) " .
+                        "LEFT JOIN `two` ON (FALSE) " .
                         "LEFT JOIN `three` ON ( `one`.`one_id` = `three`.`one_id`) " .
                     "WHERE `one`.`field1` BETWEEN :int_0 AND :int_1" .
-                ") s ORDER BY IFNULL(`one__one_id`, 999999999999999999999999), IFNULL(`two__id`, 999999999999999999999999), IFNULL(`three__id`, 999999999999999999999999)"
+                ") s ORDER BY COALESCE(`one__one_id`, 999999999999999999999999), COALESCE(`two__id`, 999999999999999999999999), COALESCE(`three__id`, 999999999999999999999999)"
             ],
             [ // #2 two includes, including many to many join and target collection sort field
                 [
@@ -352,18 +352,18 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id` " .
                     "FROM `one` " .
                         "LEFT JOIN `two` ON ( `one`.`id` = `two`.`one_id`) " .
-                        "LEFT JOIN `one_three` ON (`one_three`.`id` IS NULL) " .
-                        "LEFT JOIN `three` ON (`three`.`id` IS NULL) " .
+                        "LEFT JOIN `one_three` ON (FALSE) " .
+                        "LEFT JOIN `three` ON (FALSE) " .
                     "UNION " .
                     "SELECT " .
                         "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
                         "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
                         "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id` " .
                     "FROM `one` " .
-                        "LEFT JOIN `two` ON (`two`.`id` IS NULL) " .
+                        "LEFT JOIN `two` ON (FALSE) " .
                         "LEFT JOIN `one_three` ON ( `one`.`id` = `one_three`.`one_id`) " .
                         "LEFT JOIN `three` ON ( `one_three`.`three_id` = `three`.`id`)" .
-                ") s ORDER BY `one__field1` DESC, IFNULL(`two__id`, 999999999999999999999999), IFNULL(`three__id`, 999999999999999999999999)"
+                ") s ORDER BY `one__field1` DESC, COALESCE(`two__id`, 999999999999999999999999), COALESCE(`three__id`, 999999999999999999999999)"
             ],
             [ // #3 four includes, including child relationships
                 [
@@ -438,9 +438,9 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "`five`.`field8` AS `five__field8`, `five`.`id` AS `five__id` " .
                     "FROM `one` " .
                         "LEFT JOIN `two` ON ( `one`.`id` = `two`.`one_id`) " .
-                        "LEFT JOIN `three` ON (`three`.`id` IS NULL) " .
-                        "LEFT JOIN `four` ON (`four`.`id` IS NULL) " .
-                        "LEFT JOIN `five` ON (`five`.`id` IS NULL) " .
+                        "LEFT JOIN `three` ON (FALSE) " .
+                        "LEFT JOIN `four` ON (FALSE) " .
+                        "LEFT JOIN `five` ON (FALSE) " .
                     "UNION " .
                     "SELECT " .
                         "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
@@ -449,10 +449,10 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "`four`.`field7` AS `four__field7`, `four`.`id` AS `four__id`, " .
                         "`five`.`field8` AS `five__field8`, `five`.`id` AS `five__id` " .
                     "FROM `one` " .
-                        "LEFT JOIN `two` ON (`two`.`id` IS NULL) " .
+                        "LEFT JOIN `two` ON (FALSE) " .
                         "LEFT JOIN `three` ON ( `one`.`id` = `three`.`one_id`) " .
                         "LEFT JOIN `four` ON ( `three`.`id` = `four`.`three_id`) " .
-                        "LEFT JOIN `five` ON (`five`.`id` IS NULL) " .
+                        "LEFT JOIN `five` ON (FALSE) " .
                     "UNION " .
                     "SELECT " .
                         "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
@@ -461,11 +461,11 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "`four`.`field7` AS `four__field7`, `four`.`id` AS `four__id`, " .
                         "`five`.`field8` AS `five__field8`, `five`.`id` AS `five__id` " .
                     "FROM `one` " .
-                        "LEFT JOIN `two` ON (`two`.`id` IS NULL) " .
+                        "LEFT JOIN `two` ON (FALSE) " .
                         "LEFT JOIN `three` ON ( `one`.`id` = `three`.`one_id`) " .
-                        "LEFT JOIN `four` ON (`four`.`id` IS NULL) " .
+                        "LEFT JOIN `four` ON (FALSE) " .
                         "LEFT JOIN `five` ON ( `three`.`id` = `five`.`three_id`)" .
-                ") s ORDER BY IFNULL(`one__id`, 999999999999999999999999), IFNULL(`two__id`, 999999999999999999999999), IFNULL(`three__id`, 999999999999999999999999), IFNULL(`four__id`, 999999999999999999999999), IFNULL(`five__id`, 999999999999999999999999)"
+                ") s ORDER BY COALESCE(`one__id`, 999999999999999999999999), COALESCE(`two__id`, 999999999999999999999999), COALESCE(`three__id`, 999999999999999999999999), COALESCE(`four__id`, 999999999999999999999999), COALESCE(`five__id`, 999999999999999999999999)"
             ]
         ];
     }
