@@ -74,7 +74,8 @@ class SqlStorage implements StorageInterface
         $options = [
             "metadataProvider" => $this->entityMetadataProvider,
             "entityMap" => $query->getIncludes(),
-            "entity" => $entityClass
+            "entity" => $entityClass,
+            "trackCollectionChanges" => true
         ];
 
         if ($this->hydrator instanceof HydratorInterface && !empty($entityClass)) {
