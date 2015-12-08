@@ -15,7 +15,15 @@ class SqlNormaliser implements NormaliserInterface
      */
     protected $metadataProvider;
 
+    /**
+     * @var array
+     */
     protected $primaryKeyFields = [];
+
+    /**
+     * @var array
+     */
+    protected $treedEntities = [];
 
     /**
      * format data into the DB format
@@ -97,6 +105,7 @@ class SqlNormaliser implements NormaliserInterface
 
         // reset primary key fields
         $this->primaryKeyFields = [];
+        $this->treedEntities = [];
 
         $this->createFieldTree($prefixedFields, $entityMap, $collection, $options["entity"]);
 
@@ -119,6 +128,11 @@ class SqlNormaliser implements NormaliserInterface
         $availableJoins = $metadata->getRelationships();
 
         foreach ($entityMap as $childAlias => $childMetadata) {
+            if (!empty($this->treedEntities[$childAlias])) {
+                // Already done this one. Don't process again
+                continue;
+            }
+
             /** @var EntityMetadata $childMetadata */
             $childEntity = $childMetadata->getEntity();
 
@@ -135,6 +149,9 @@ class SqlNormaliser implements NormaliserInterface
                 throw new NormalisationException("No property for '$entity' defined in the relationship for '$childAlias'");
             }
             $property = $thisJoin[EntityMetadata::METADATA_RELATIONSHIP_PROPERTY];
+
+            // add the alias to the list of processed children
+            $this->treedEntities[$childAlias] = true;
 
             if (empty($fields[$childAlias])) {
                 // get this entities collection from it's metadata and try that
