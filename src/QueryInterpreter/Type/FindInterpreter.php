@@ -348,7 +348,8 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
             $largestValue = "999999999999999999999999";
             $pk = $primaryKeys[$alias];
             if ($metadata->getFieldType($pk) == "string") {
-                $largestValue = "0xFFFF";
+                // unicode sequence for the last possible character in UTF-8
+                $largestValue = '\'U&"\FFFF"\'';
             }
 
             $sort[] = "COALESCE(" . $this->renderArbitraryReference($this->getSelectFieldAlias($alias. "." . $primaryKeys[$alias])) . ", $largestValue)";
