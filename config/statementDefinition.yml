@@ -263,7 +263,10 @@ parameters:
             -
                 name: limit
             -
-                name: int
+                any:
+                    name:
+                        - int
+                        - integer
             -
                 type: offset
                 optional: true
@@ -273,4 +276,7 @@ parameters:
                 name: offset
                 optional: true
             -
-                name: int
+                any:
+                    name:
+                        - int
+                        - integer
