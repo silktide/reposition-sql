@@ -55,9 +55,7 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
         $this->fieldSql = [];
         $pkField = $this->toSplitCase($this->primaryKey);
         foreach ($metadata->getFieldNames() as $field) {
-            if ($field != $pkField) {
-                $this->fieldSql[$field] = $this->renderArbitraryReference($field);
-            }
+            $this->fieldSql[$field] = $this->renderArbitraryReference($field);
         }
         // if any of this entities relationships are one to one, check if we need to set "our" field
         foreach ($metadata->getRelationships() as $alias => $relationship) {
@@ -93,6 +91,11 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
                     $options["saveType"] != "update"
                 )
             );
+
+        // remove the primary key from the field list if we're updating or this PK is auto incrementing
+        if (!$isInsert || $pkMetadata[EntityMetadata::METADATA_FIELD_AUTO_INCREMENTING] == true) {
+            unset($this->fieldSql[$pkField]);
+        }
 
         if ($isInsert) {
             // insert;
