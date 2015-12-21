@@ -174,7 +174,7 @@ abstract class AbstractSqlQueryTypeInterpreter
         if ($type == Value::TYPE_NULL) {
             return "NULL";
         }
-        if ($type == Value::TYPE_BOOL) {
+        if ($type == Value::TYPE_BOOL || $type == Value::TYPE_BOOLEAN) {
             return $value? "TRUE": "FALSE";
         }
         // encode any array data to JSON
