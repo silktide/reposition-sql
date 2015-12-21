@@ -18,6 +18,11 @@ class PdoAdapter
     protected $credentials;
 
     /**
+     * @var bool
+     */
+    protected $useMysqlBufferedQueries;
+
+    /**
      * @var \PDO
      */
     protected $pdo;
@@ -25,10 +30,12 @@ class PdoAdapter
     /**
      * @param DbCredentialsInterface $credentials
      * @param bool $lazyConnection
+     * @param bool $useMysqlBufferedQueries
      */
-    public function __construct(DbCredentialsInterface $credentials, $lazyConnection = true)
+    public function __construct(DbCredentialsInterface $credentials, $lazyConnection = true, $useMysqlBufferedQueries = false)
     {
         $this->credentials = $credentials;
+        $this->useMysqlBufferedQueries = $useMysqlBufferedQueries;
         if (!$lazyConnection) {
             $this->connect();
         }
@@ -47,6 +54,7 @@ class PdoAdapter
         $dsn = "$driver:dbname={$this->credentials->getSchema()};host={$this->credentials->getHost()}";
 
         $this->pdo = new \PDO($dsn, $this->credentials->getUsername(), $this->credentials->getPassword());
+        $this->pdo->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, $this->useMysqlBufferedQueries);
     }
 
     /**
