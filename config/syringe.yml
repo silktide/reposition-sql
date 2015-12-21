@@ -10,6 +10,8 @@ parameters:
 
     identifierDelimiter: "`"
 
+    useMysqlBufferedQueries: false
+
     silktide_reposition.tokenDefinitions: %silktide_reposition-sql.sqlStatementDefinition%
 
 services:
@@ -25,6 +27,8 @@ services:
         class: Silktide\Reposition\Sql\Storage\PdoAdapter
         arguments:
             - @credentials
+            - true
+            - %useMysqlBufferedQueries%
 
     credentials:
         class: Silktide\Reposition\Sql\Storage\DbCredentials
