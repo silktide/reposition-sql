@@ -71,6 +71,9 @@ class SqlStorage implements StorageInterface
 
         $data = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
+        // close the statement to release memory as we don't need it anymore
+        $statement->closeCursor();
+
         $options = [
             "metadataProvider" => $this->entityMetadataProvider,
             "entityMap" => $query->getIncludes(),
