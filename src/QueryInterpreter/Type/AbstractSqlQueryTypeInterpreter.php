@@ -110,6 +110,8 @@ abstract class AbstractSqlQueryTypeInterpreter
             case Value::TYPE_FLOAT:
             case Value::TYPE_ARRAY:
                 return $this->renderValueParameter($value, $type);
+            case "sort-direction":
+                return $value == TokenSequencerInterface::SORT_DESC? "DESC": "ASC";
             case "function":
                 // translate function name
                 $nameMap = [
