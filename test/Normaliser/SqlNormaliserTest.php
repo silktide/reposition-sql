@@ -178,7 +178,7 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                 [["field1" => "value1", "field2" => "value2", "twos" => [
                         ["field3" => "value3", "field4" => "value4"]
                     ], "threes" => [
-                        ["field5" => "value5", "field6" => "value6", "twos" => []]
+                        ["field5" => "value5", "field6" => "value6"]
                     ]
                 ]],
                 ["two" => $two, "three" => $three],
@@ -196,12 +196,12 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                     ["field1" => "value1", "field2" => "value2", "twos" => [
                             ["field3" => "value3", "field4" => "value4"]
                         ], "threes" => [
-                            ["field5" => "value5", "field6" => "value6", "twos" => []]
+                            ["field5" => "value5", "field6" => "value6"]
                         ]
                     ],
                     ["field1" => "value7", "field2" => "value8", "twos" => [], "threes" => [
-                        ["field5" => "value9", "field6" => "value10", "twos" => []],
-                        ["field5" => "value11", "field6" => "value12", "twos" => []]
+                        ["field5" => "value9", "field6" => "value10"],
+                        ["field5" => "value11", "field6" => "value12"]
                     ]
                     ]
                 ],

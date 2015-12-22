@@ -327,7 +327,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                     ["token", "close"],
                     ["token", "sort"],
                     ["reference", "field", "one.field1", ""],
-                    ["value", "sort-direction", "desc"]
+                    ["value", "sort-direction", -1]
                 ],
                 [
                     "one" => [

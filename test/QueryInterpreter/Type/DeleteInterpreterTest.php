@@ -80,7 +80,7 @@ class DeleteInterpreterTest extends \PHPUnit_Framework_TestCase
                 [
                     ["token", "sort"],
                     ["reference", "field", "timestamp", ""],
-                    ["value", "sort-direction", "desc"],
+                    ["value", "sort-direction", -1],
                     ["reference", "field", "active", ""],
                     ["token", "limit"],
                     ["value", "int", 5]
