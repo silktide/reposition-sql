@@ -2,23 +2,52 @@
 
 namespace Silktide\Reposition\Sql\Storage;
 
-
+use Psr\Log\LoggerAwareTrait;
 use Silktide\Reposition\Hydrator\HydratorInterface;
 use Silktide\Reposition\Metadata\EntityMetadataProviderInterface;
 use Silktide\Reposition\Normaliser\NormaliserInterface;
 use Silktide\Reposition\QueryBuilder\TokenSequencerInterface;
+use Silktide\Reposition\QueryInterpreter\CompiledQuery;
 use Silktide\Reposition\Sql\QueryInterpreter\SqlQueryInterpreter;
 use Silktide\Reposition\Storage\StorageInterface;
+use Silktide\Reposition\Storage\Logging\QueryLogProcessorInterface;
+use Silktide\Reposition\Storage\Logging\ErrorLogProcessorInterface;
 
 class SqlStorage implements StorageInterface
 {
+    use LoggerAwareTrait;
 
+    /**
+     * @var PdoAdapter
+     */
     protected $database;
+
+    /**
+     * @var SqlQueryInterpreter
+     */
     protected $interpreter;
+
+    /**
+     * @var EntityMetadataProviderInterface
+     */
     protected $entityMetadataProvider;
+
+    /**
+     * @var HydratorInterface
+     */
     protected $hydrator;
 
     protected $parameters = [];
+
+    /**
+     * @var ErrorLogProcessorInterface
+     */
+    protected $errorProcessor;
+
+    /**
+     * @var QueryLogProcessorInterface
+     */
+    protected $queryProcessor;
 
     public function __construct(
         PdoAdapter $database,
@@ -50,6 +79,26 @@ class SqlStorage implements StorageInterface
         return !empty($this->entityMetadataProvider);
     }
 
+    public function setErrorLogProcessor(ErrorLogProcessorInterface $processor)
+    {
+        $this->errorProcessor = $processor;
+    }
+
+    public function setQueryLogProcessor(QueryLogProcessorInterface $processor)
+    {
+        $this->queryProcessor = $processor;
+    }
+
+    protected function canLogErrors()
+    {
+        return !empty($this->logger) && !empty($this->errorProcessor);
+    }
+
+    protected function canLogQueries()
+    {
+        return !empty($this->logger) && !empty($this->queryProcessor);
+    }
+
     /**
      * @param TokenSequencerInterface $query
      * @param string $entityClass
@@ -59,16 +108,28 @@ class SqlStorage implements StorageInterface
     {
         $compiledQuery = $this->interpreter->interpret($query);
 
-        $statement = $this->database->prepare($compiledQuery->getQuery());
-        $statement->execute($compiledQuery->getArguments());
+        $sql = $compiledQuery->getQuery();
+        $statement = $this->database->prepare($sql);
+        
+        $this->prepareQueryLog($compiledQuery);
+        try {
+            $statement->execute($compiledQuery->getArguments());
+        } catch (\PDOException $e) {
+        }
+        $this->completeQueryLog();
 
         // check for errors (some drivers don't throw exceptions on SQL errors)
-        $this->checkForSqlErrors($statement, "Query - ", $compiledQuery->getQuery());
+        $this->checkForSqlErrors($statement, "Query - ", $sql);
 
         // get the new ID and check for errors again
-        $newId = $this->database->getLastInsertId($compiledQuery->getPrimaryKeySequence());
-        $this->checkForSqlErrors($statement, "Insert ID - ", $compiledQuery->getQuery());
+        try {
+            $newId = $this->database->getLastInsertId($compiledQuery->getPrimaryKeySequence());
+        } catch (\PDOException $e) {
+        }
+        $this->checkForSqlErrors($statement, "Insert ID - ", $sql);
 
+        $this->logQuery();
+        
         $data = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
         // close the statement to release memory as we don't need it anymore
@@ -96,9 +157,39 @@ class SqlStorage implements StorageInterface
     {
         $errorInfo = $statement->errorInfo();
         if ($errorInfo[0] != "00000") { // ANSI SQL error code for "success"
+            $this->logError($originalSql, $prefix, $errorInfo);
             $e = new \PDOException($prefix . $errorInfo[0] . " (" . $errorInfo[1] . "): " . $errorInfo[2] . ",\nSQL: " . $originalSql);
             $e->errorInfo = $errorInfo;
             throw $e;
+        }
+    }
+
+    protected function prepareQueryLog(CompiledQuery $query)
+    {
+        if ($this->canLogQueries()) {
+            $this->queryProcessor->recordQueryStart($query);
+        }
+    }
+    
+    protected function completeQueryLog()
+    {
+        if ($this->canLogQueries()) {
+            $this->queryProcessor->recordQueryEnd();
+        }
+    }
+
+    protected function logQuery()
+    {
+        if ($this->canLogQueries()) {
+            $this->logger->debug("SQL query complete");
+        }
+    }
+
+    protected function logError($query, $prefix, array $errorInfo)
+    {
+        if (!$this->canLogErrors()) {
+            $this->errorProcessor->recordError($query, $errorInfo);
+            $this->logger->error($prefix . $errorInfo[2]);
         }
     }
 
