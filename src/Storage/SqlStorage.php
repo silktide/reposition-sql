@@ -187,7 +187,7 @@ class SqlStorage implements StorageInterface
 
     protected function logError($query, $prefix, array $errorInfo)
     {
-        if (!$this->canLogErrors()) {
+        if ($this->canLogErrors()) {
             $this->errorProcessor->recordError($query, $errorInfo);
             $this->logger->error($prefix . $errorInfo[2]);
         }
