@@ -71,6 +71,8 @@ abstract class AbstractSqlQueryTypeInterpreter
                 return "(";
             case "close":
                 return ")";
+            case "group":
+                return "GROUP BY";
             case "sort":
                 return $this->renderSort();
             case "function":
