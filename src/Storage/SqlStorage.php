@@ -113,7 +113,8 @@ class SqlStorage implements StorageInterface
         
         $this->prepareQueryLog($compiledQuery);
         try {
-            $statement->execute($compiledQuery->getArguments());
+            $this->bindValues($statement, $compiledQuery->getArguments());
+            $statement->execute();
         } catch (\PDOException $e) {
         }
         $this->completeQueryLog();
@@ -151,6 +152,19 @@ class SqlStorage implements StorageInterface
             $response = $data;
         }
         return $response;
+    }
+
+    protected function bindValues(\PDOStatement $statement, $arguments)
+    {
+        foreach ($arguments as $param => $value) {
+            $type = \PDO::PARAM_STR;
+            if (strpos($param, "int") !== false) {
+                $type = \PDO::PARAM_INT;
+            } elseif (strpos($param, "bool") !== false) {
+                $type = \PDO::PARAM_BOOL;
+            }
+            $statement->bindValue($param, $value, $type);
+        }
     }
 
     protected function checkForSqlErrors(\PDOStatement $statement, $prefix, $originalSql)
