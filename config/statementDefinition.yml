@@ -128,9 +128,9 @@ parameters:
             -
                 any:
                     type:
-                        - operator-expression
                         - between-expression
                         - in-expression
+                        - operator-expression
                 optional: true
             -
                 name: close
@@ -171,7 +171,18 @@ parameters:
             -
                 type: logic-operator
             -
+                name: open
+                optional: true
+                flag: isOpen
+            -
                 type: condition
+            -
+                type: logic-condition
+                optional: true
+                multiple: true
+            -
+                name: close
+                optional: isOpen
 
         operator-expression:
             -
