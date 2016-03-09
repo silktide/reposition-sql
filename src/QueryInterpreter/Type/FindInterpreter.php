@@ -123,10 +123,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         $mainMetadata = $this->query->getEntityMetadata();
         $mainCollection = $mainMetadata->getCollection();
 
-
-        $fieldList = implode(", ", $this->fields);
-
-        $subqueryTemplateSql = "SELECT $fieldList FROM " . $this->renderArbitraryReference($mainCollection);
+        $subqueryTemplateSql = "SELECT {{fieldList}} FROM " . $this->renderArbitraryReference($mainCollection);
 
         // parse the tokens for join conditions
         $joinConditions = [];
@@ -211,13 +208,16 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
             $subqueries[] = strtr($subqueryTemplateSql, $replacements);
         }
 
+        $sortData = $this->processSortFields($token, $collections, $mainCollection, $primaryKeys);
+
+        $fieldList = implode(", ", array_merge($this->fields, $sortData["additionalFields"]));
+
         $sql = "SELECT * FROM (" . implode(" UNION ", $subqueries) . ") s";
+        $sql = str_replace("{{fieldList}}", $fieldList, $sql);
 
-        $sort = $this->processSortFields($token, $collections, $mainCollection, $primaryKeys);
-
-        if (!empty($sort)) {
+        if (!empty($sortData["sort"])) {
             // shouldn't be possible to not have any sort fields, but hey!
-            $sql .= " ORDER BY " . implode(", ", $sort);
+            $sql .= " ORDER BY " . implode(", ", $sortData["sort"]);
         }
 
         return $sql;
@@ -244,7 +244,6 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         foreach ($collections as $alias => $metadata) {
             /** @var EntityMetadata $metadata */
             if (empty($metadata)) {
-                $primaryKeys[$alias] = "id";
                 continue;
             }
             $primaryKeys[$alias] = $metadata->getPrimaryKey();
@@ -312,15 +311,32 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
     {
         // parse order by, taking any field related to the main collection, plus the first field from the included collections, wrapped in an IFNULL()
         $sort = [];
+        $additionalFields = [];
+        $mainCollectionSortFieldsExist = false;
+
         do {
             /** @var Token $token */
             if (!empty($token) && $token->getType() == 'sort') {
                 $appendDirection = false;
                 while(($token = $this->query->getNextToken()) && $token->getType() != 'limit') {
+
                     /** @var Reference $token */
-                    if ($token->getType() == "field" && $this->getCollectionFromReference($token) == $mainCollection) {
-                        $sort[] = $this->renderArbitraryReference($this->getSelectFieldAlias($token->getValue()));
-                        $appendDirection = true;
+                    if ($token->getType() == "field") {
+                        $sortCollection = $this->getCollectionFromReference($token);
+                        if (!isset($primaryKeys[$sortCollection]) || $sortCollection == $mainCollection) {
+
+                            $sortAlias = $this->getSelectFieldAlias($token->getValue());
+                            if (empty($this->fields[$sortAlias])) {
+                                // this sort field isn't in the list of fields. We need to add it to the list of additional fields
+                                $additionalFields[$sortAlias] = $this->renderArbitraryReference($token->getValue(), $sortAlias);
+                            } else {
+                                $mainCollectionSortFieldsExist = true;
+                            }
+                            $sort[] = $this->renderArbitraryReference($sortAlias);
+                            $appendDirection = true;
+                        } else {
+                            $appendDirection = false;
+                        }
                     } elseif ($token->getType() == "sort-direction" && $appendDirection) {
                         // append the sort direction to the last sort field we processed
                         $sort[count($sort) - 1] .= " " . $this->renderToken($token);
@@ -332,14 +348,9 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
             }
         } while (!empty($token) && $token->getType() != 'limit' && ($token = $this->query->getNextToken()));
 
-        $mainCollectionSortFieldsExist = false;
-        if (!empty($sort)) {
-            // if main collection sort fields were found, don't add it's PK to the list in the next step
-            $mainCollectionSortFieldsExist = true;
-        }
-
         foreach ($collections as $alias => $metadata) {
             /** @var EntityMetadata $metadata */
+            // don't auto generate a sort clause for the main collection if sort fields were found
             if (empty($metadata) || ($alias == $mainCollection && $mainCollectionSortFieldsExist)) {
                 continue;
             }
@@ -354,7 +365,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 
             $sort[] = "COALESCE(" . $this->renderArbitraryReference($this->getSelectFieldAlias($alias. "." . $primaryKeys[$alias])) . ", $largestValue)";
         }
-        return $sort;
+        return ["sort" => $sort, "additionalFields" => $additionalFields];
     }
 
     /**
