@@ -74,8 +74,13 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         }
 
         // if this query has more than one include, it's more complex and requires separate processing
-        if (count($includes) > 1) {
+        // if it has one include, we need to disable the limit clause
+        $includeCount = count($includes);
+        $limited = true;
+        if ($includeCount > 1) {
             return $this->renderIncludeQuery($token);
+        } elseif ($includeCount > 0) {
+            $limited = false;
         }
 
         // simple, no include query. Render all remaining tokens
@@ -88,6 +93,12 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
             }
 
             $sql .= " " . $this->renderToken($token);
+
+            if (!$limited && $token->getType() == "sort") {
+                // the limit token will already have been rendered, so we need to strip it out
+                $sql = str_replace(" LIMIT", "", $sql);
+                break;
+            }
         } while ($token = $this->query->getNextToken());
 
         return $sql;
