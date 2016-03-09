@@ -201,8 +201,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         // recursively construct the join tree
         $joinTree = $this->constructJoinTree($joinMap, $mainCollection);
         // recursively parse the tree into join lists
-        $joinLists = [];
-        $this->parseJoinTree($joinLists, $joinTree);
+        $joinLists = $this->parseJoinTree($joinTree, $collections);
 
         // create the SQL for each subquery
         $subqueries = [];
@@ -304,18 +303,34 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         return $tree;
     }
 
-    protected function parseJoinTree(array &$joinLists, array $joinTree, $currentBranch = [])
+    protected function parseJoinTree(array $joinTree, $collections, $currentBranch = [])
     {
+        $joinLists = [];
         foreach ($joinTree as $branch => $leaves) {
             $thisBranch = $currentBranch;
             $thisBranch[] = $branch;
             if (!empty($leaves)) {
-                $this->parseJoinTree($joinLists, $leaves, $thisBranch);
+                $leafLists = $this->parseJoinTree($leaves, $collections, $thisBranch);
+                $joinLists = array_merge($joinLists, $leafLists);
             } else {
                 // reached leaf node, add join branch to the list
-                $joinLists[] = $thisBranch;
+                $joinLists[$branch] = $thisBranch;
             }
         }
+        // remove any reducable leaves (those lists which end in a collection that isn't an include) from the join list ...
+        $reducableLeaves = [];
+        foreach ($joinLists as $leaf => $list) {
+            if (empty($collections[$leaf])) {
+                $reducableLeaves = array_merge($reducableLeaves, $list);
+                unset($joinLists[$leaf]);
+            }
+        }
+        // ... and prepend them to all other sibling lists
+        foreach ($joinLists as $leaf => $list) {
+            // merge reducables with the list and double flip to remove duplicate entries
+            $joinLists[$leaf] = array_flip(array_flip(array_merge($reducableLeaves, $list)));
+        }
+        return $joinLists;
     }
 
     protected function processSortFields($token, array $collections, $mainCollection, array $primaryKeys)
