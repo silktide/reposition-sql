@@ -18,6 +18,11 @@ class PdoAdapter
     protected $credentials;
 
     /**
+     * @var string
+     */
+    protected $dsnTemplate;
+
+    /**
      * @var bool
      */
     protected $useMysqlBufferedQueries;
@@ -29,12 +34,14 @@ class PdoAdapter
 
     /**
      * @param DbCredentialsInterface $credentials
+     * @param $dsnTemplate
      * @param bool $lazyConnection
      * @param bool $useMysqlBufferedQueries
      */
-    public function __construct(DbCredentialsInterface $credentials, $lazyConnection = true, $useMysqlBufferedQueries = false)
+    public function __construct(DbCredentialsInterface $credentials, $dsnTemplate, $lazyConnection = true, $useMysqlBufferedQueries = false)
     {
         $this->credentials = $credentials;
+        $this->dsnTemplate = $dsnTemplate;
         $this->useMysqlBufferedQueries = $useMysqlBufferedQueries;
         if (!$lazyConnection) {
             $this->connect();
@@ -51,7 +58,13 @@ class PdoAdapter
             throw new \PDOException("The driver '$driver' is not currently available to use with PDO");
         }
 
-        $dsn = "$driver:dbname={$this->credentials->getSchema()};host={$this->credentials->getHost()};charset=utf8mb4";
+        $replacements = [
+            "{dbDriver}" => $driver,
+            "{dbName}" => $this->credentials->getSchema(),
+            "{dbHost}" => $this->credentials->getHost()
+        ];
+
+        $dsn = strtr($this->dsnTemplate, $replacements);
 
         $this->pdo = new \PDO($dsn, $this->credentials->getUsername(), $this->credentials->getPassword());
         $this->pdo->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, $this->useMysqlBufferedQueries);
