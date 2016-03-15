@@ -8,6 +8,9 @@ parameters:
     dbPassword: ""
     dbName: ""
 
+    defaultDsn: "{dbDriver}:dbname={dbName};host={dbHost}"
+    dsnTemplate: "%silktide_reposition-sql.defaultDsn%"
+
     identifierDelimiter: "`"
 
     useMysqlBufferedQueries: false
@@ -27,6 +30,7 @@ services:
         class: Silktide\Reposition\Sql\Storage\PdoAdapter
         arguments:
             - @credentials
+            - %dsnTemplate%
             - true
             - %useMysqlBufferedQueries%
 
