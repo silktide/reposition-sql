@@ -120,14 +120,16 @@ class SqlStorage implements StorageInterface
         $this->completeQueryLog();
 
         // check for errors (some drivers don't throw exceptions on SQL errors)
-        $this->checkForSqlErrors($statement, "Query - ", $sql);
+        $this->checkForSqlErrors($statement->errorInfo(), "Query - ", $sql);
 
-        // get the new ID and check for errors again
-        try {
-            $newId = $this->database->getLastInsertId($compiledQuery->getPrimaryKeySequence());
-        } catch (\PDOException $e) {
+        // if we're an insert statement, get the new ID and check for errors again
+        if (!empty($compiledQuery->getPrimaryKeySequence())) {
+            try {
+                $newId = $this->database->getLastInsertId($compiledQuery->getPrimaryKeySequence());
+            } catch (\PDOException $e) {
+            }
+            $this->checkForSqlErrors($this->database->getErrorInfo(), "Insert ID - ", $sql);
         }
-        $this->checkForSqlErrors($statement, "Insert ID - ", $sql);
 
         $this->logQuery();
         
@@ -167,9 +169,13 @@ class SqlStorage implements StorageInterface
         }
     }
 
-    protected function checkForSqlErrors(\PDOStatement $statement, $prefix, $originalSql)
+    /**
+     * @param array $errorInfo
+     * @param $prefix
+     * @param $originalSql
+     */
+    protected function checkForSqlErrors(array $errorInfo, $prefix, $originalSql)
     {
-        $errorInfo = $statement->errorInfo();
         if ($errorInfo[0] != "00000") { // ANSI SQL error code for "success"
             $this->logError($originalSql, $prefix, $errorInfo);
             $e = new \PDOException($prefix . $errorInfo[0] . " (" . $errorInfo[1] . "): " . $errorInfo[2] . ",\nSQL: " . $originalSql);
@@ -178,13 +184,16 @@ class SqlStorage implements StorageInterface
         }
     }
 
+    /**
+     * @param CompiledQuery $query
+     */
     protected function prepareQueryLog(CompiledQuery $query)
     {
         if ($this->canLogQueries()) {
             $this->queryProcessor->recordQueryStart($query);
         }
     }
-    
+
     protected function completeQueryLog()
     {
         if ($this->canLogQueries()) {

@@ -83,6 +83,18 @@ class PdoAdapter
         return $this->pdo->prepare($statement, $driverOptions);
     }
 
+    /**
+     * @return array
+     */
+    public function getErrorInfo()
+    {
+        return $this->pdo->errorInfo();
+    }
+
+    /**
+     * @param string $sequence
+     * @return string
+     */
     public function getLastInsertId($sequence = "")
     {
         return $this->pdo->lastInsertId($sequence);
