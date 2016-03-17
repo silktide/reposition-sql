@@ -21,15 +21,15 @@ services:
     storage:
         class: Silktide\Reposition\Sql\Storage\SqlStorage
         arguments:
-            - @dbAdapter
-            - @interpreter
-            - @silktide_reposition.defaultHydrator
-            - @normaliser
+            - "@dbAdapter"
+            - "@interpreter"
+            - "@silktide_reposition.defaultHydrator"
+            - "@normaliser"
 
     dbAdapter:
         class: Silktide\Reposition\Sql\Storage\PdoAdapter
         arguments:
-            - @credentials
+            - "@credentials"
             - %dsnTemplate%
             - true
             - %useMysqlBufferedQueries%
@@ -46,7 +46,7 @@ services:
     interpreter:
         class: Silktide\Reposition\Sql\QueryInterpreter\SqlQueryInterpreter
         arguments:
-            - @silktide_reposition.tokenParser
+            - "@silktide_reposition.tokenParser"
             - "#queryTypeInterpreter"
             - %identifierDelimiter%
 
@@ -74,7 +74,7 @@ services:
         class: Silktide\Reposition\Sql\Normaliser\SqlNormaliser
 
     silktide_reposition.defaultStorage:
-        aliasOf: @storage
+        aliasOf: "@storage"
 
     silktide_reposition.defaultNormaliser:
-        aliasOf: @normaliser
+        aliasOf: "@normaliser"
