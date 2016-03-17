@@ -15,7 +15,7 @@ parameters:
 
     useMysqlBufferedQueries: false
 
-    silktide_reposition.tokenDefinitions: %silktide_reposition-sql.sqlStatementDefinition%
+    silktide_reposition.tokenDefinitions: "%silktide_reposition-sql.sqlStatementDefinition%"
 
 services:
     storage:
@@ -30,25 +30,25 @@ services:
         class: Silktide\Reposition\Sql\Storage\PdoAdapter
         arguments:
             - "@credentials"
-            - %dsnTemplate%
+            - "%dsnTemplate%"
             - true
-            - %useMysqlBufferedQueries%
+            - "%useMysqlBufferedQueries%"
 
     credentials:
         class: Silktide\Reposition\Sql\Storage\DbCredentials
         arguments:
-            - %dbDriver%
-            - %dbHost%
-            - %dbUsername%
-            - %dbPassword%
-            - %dbName%
+            - "%dbDriver%"
+            - "%dbHost%"
+            - "%dbUsername%"
+            - "%dbPassword%"
+            - "%dbName%"
 
     interpreter:
         class: Silktide\Reposition\Sql\QueryInterpreter\SqlQueryInterpreter
         arguments:
             - "@silktide_reposition.tokenParser"
             - "#queryTypeInterpreter"
-            - %identifierDelimiter%
+            - "%identifierDelimiter%"
 
     findInterpreter:
         class: Silktide\Reposition\Sql\QueryInterpreter\Type\FindInterpreter
