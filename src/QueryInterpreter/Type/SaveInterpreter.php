@@ -84,8 +84,9 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
 
         // this is an insert if, we don't have a value for the ID (auto incrementing PK) or the PK isn't auto incrementing
         // and the query does not specifically request us to update
+        $autoIncrementing = $pkMetadata[EntityMetadata::METADATA_FIELD_AUTO_INCREMENTING];
         $isInsert = empty($id) || (
-                $pkMetadata[EntityMetadata::METADATA_FIELD_AUTO_INCREMENTING] == false &&
+                !$autoIncrementing &&
                 (
                     empty($options["saveType"]) ||
                     $options["saveType"] != "update"
@@ -93,7 +94,7 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
             );
 
         // remove the primary key from the field list if we're updating or this PK is auto incrementing
-        if (!$isInsert || $pkMetadata[EntityMetadata::METADATA_FIELD_AUTO_INCREMENTING] == true) {
+        if (!$isInsert || $autoIncrementing) {
             unset($this->fieldSql[$pkField]);
         }
 
@@ -112,7 +113,9 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
 
             $sql .= implode(", ", $entities);
 
-            $this->primaryKeySequence = $collection . "_" . $metadata->getPrimaryKey() . "_seq";
+            if ($autoIncrementing) {
+                $this->primaryKeySequence = $collection . "_" . $metadata->getPrimaryKey() . "_seq";
+            }
 
         } else {
             // update
@@ -205,6 +208,7 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
         $this->fieldSql = [];
         $this->relatedProperties = [];
         $this->sqlCommand = null;
+        $this->primaryKeySequence = "";
     }
 
 }
