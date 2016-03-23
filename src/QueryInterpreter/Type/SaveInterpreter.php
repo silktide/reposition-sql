@@ -176,9 +176,6 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
         $underscores = [];
         foreach ($entity as $field => $value) {
             $underscoreField = $this->toSplitCase($field);
-            if (is_array($value)) {
-                $value = $this->convertEntityKeysToUnderscores($value);
-            }
             $underscores[$underscoreField] = $value;
         }
         return $underscores;
