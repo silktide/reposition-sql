@@ -111,6 +111,7 @@ abstract class AbstractSqlQueryTypeInterpreter
             case Value::TYPE_INTEGER:
             case Value::TYPE_FLOAT:
             case Value::TYPE_ARRAY:
+            case Value::TYPE_DATETIME:
                 return $this->renderValueParameter($value, $type);
             case "sort-direction":
                 return $value == TokenSequencerInterface::SORT_DESC? "DESC": "ASC";
@@ -172,13 +173,18 @@ abstract class AbstractSqlQueryTypeInterpreter
         if (empty($type)) {
             $type = "value";
         }
-
+        
         if ($type == Value::TYPE_NULL) {
             return "NULL";
         }
         if ($type == Value::TYPE_BOOL || $type == Value::TYPE_BOOLEAN) {
             return $value? "TRUE": "FALSE";
         }
+
+        if ($type == Value::TYPE_DATETIME && $value instanceof \DateTime) {
+            $value = $value->getTimestamp();
+        }
+
         // encode any array data to JSON
         if (is_array($value)) {
             $value = json_encode($value);

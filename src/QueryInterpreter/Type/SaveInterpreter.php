@@ -194,6 +194,8 @@ class SaveInterpreter extends AbstractSqlQueryTypeInterpreter
             $type = Value::TYPE_BOOL;
         } elseif (is_array($value)) {
             $type = Value::TYPE_ARRAY;
+        } elseif ($value instanceof \DateTime) {
+            $type = Value::TYPE_DATETIME;
         }
 
         return $this->renderValueParameter($value, $type);
