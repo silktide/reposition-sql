@@ -73,14 +73,9 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
             throw new InterpretationException("Cannot interpret find query, there are no fields to return");
         }
 
-        // if this query has more than one include, it's more complex and requires separate processing
-        // if it has one include, we need to disable the limit clause
-        $includeCount = count($includes);
-        $limited = true;
-        if ($includeCount > 1) {
+        // if this query has an include, it's more complex and requires separate processing
+        if (count($includes) > 0) {
             return $this->renderIncludeQuery($token);
-        } elseif ($includeCount > 0) {
-            $limited = false;
         }
 
         // simple, no include query. Render all remaining tokens
@@ -93,12 +88,6 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
             }
 
             $sql .= " " . $this->renderToken($token);
-
-            if (!$limited && $token->getType() == "sort") {
-                // the limit token will already have been rendered, so we need to strip it out
-                $sql = str_replace(" LIMIT", "", $sql);
-                break;
-            }
         } while ($token = $this->query->getNextToken());
 
         return $sql;
@@ -219,16 +208,21 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         }
 
         $sortData = $this->processSortFields($token, $collections, $mainCollection, $primaryKeys);
+        $sortSql = empty($sortData["sort"])? "": " ORDER BY " . implode(", ", $sortData["sort"]);
+        $limitSort = empty($sortData["limitSort"])? "": " ORDER BY " . implode(", ", $sortData["limitSort"]);
+
+        // process limits
+        $mainAliasedPk = $this->getSelectFieldAlias($mainCollection . "." . $primaryKeys[$mainCollection]);
+        $limitSubquery = $this->processIncludeQueryLimit($sortData["nextToken"], $joinConditions, $subqueryTemplateSql, $limitSort, $mainAliasedPk);
 
         $fieldList = implode(", ", array_merge($this->fields, $sortData["additionalFields"]));
 
-        $sql = "SELECT * FROM (" . implode(" UNION ", $subqueries) . ") s";
+        $sql = "SELECT s.* FROM (" . implode(" UNION ", $subqueries) . ") s";
+        $sql .= $limitSubquery;
         $sql = str_replace("{{fieldList}}", $fieldList, $sql);
 
-        if (!empty($sortData["sort"])) {
-            // shouldn't be possible to not have any sort fields, but hey!
-            $sql .= " ORDER BY " . implode(", ", $sortData["sort"]);
-        }
+        // add the sort SQL, but with the fields aliased to the "s" table
+        $sql .= $sortSql;
 
         return $sql;
     }
@@ -336,9 +330,9 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
     protected function processSortFields($token, array $collections, $mainCollection, array $primaryKeys)
     {
         // parse order by, taking any field related to the main collection, plus the first field from the included collections, wrapped in an IFNULL()
-        $sort = [];
+        $sort = []; // this is the same as $sort, but all fields will be prefixed
+        $limitSort = [];
         $additionalFields = [];
-        $mainCollectionSortFieldsExist = false;
 
         do {
             /** @var Token $token */
@@ -355,10 +349,9 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
                             if (empty($this->fields[$sortAlias])) {
                                 // this sort field isn't in the list of fields. We need to add it to the list of additional fields
                                 $additionalFields[$sortAlias] = $this->renderArbitraryReference($token->getValue(), $sortAlias);
-                            } else {
-                                $mainCollectionSortFieldsExist = true;
                             }
-                            $sort[] = $this->renderArbitraryReference($sortAlias);
+                            $sort[] = $this->renderArbitraryReference("s.$sortAlias");
+                            $limitSort[] = $this->renderArbitraryReference($sortAlias);
                             $appendDirection = true;
                         } else {
                             $appendDirection = false;
@@ -366,6 +359,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
                     } elseif ($token->getType() == "sort-direction" && $appendDirection) {
                         // append the sort direction to the last sort field we processed
                         $sort[count($sort) - 1] .= " " . $this->renderToken($token);
+                        $limitSort[count($limitSort) - 1] .= " " . $this->renderToken($token);
                         $appendDirection = false;
                     } else {
                         $appendDirection = false;
@@ -374,24 +368,46 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
             }
         } while (!empty($token) && $token->getType() != 'limit' && ($token = $this->query->getNextToken()));
 
+
         foreach ($collections as $alias => $metadata) {
             /** @var EntityMetadata $metadata */
             // don't auto generate a sort clause for the main collection if sort fields were found
-            if (empty($metadata) || ($alias == $mainCollection && $mainCollectionSortFieldsExist)) {
-                continue;
-            }
+
 
             // get the largest value for the field type of the PK
             $largestValue = "999999999999999999999999";
             $pk = $primaryKeys[$alias];
-            if ($metadata->getFieldType($pk) == "string") {
+            if (!empty($metadata) && $metadata->getFieldType($pk) == "string") {
                 // unicode sequence for the last possible character in UTF-8
                 $largestValue = '\'U&"\FFFF"\'';
             }
 
-            $sort[] = "COALESCE(" . $this->renderArbitraryReference($this->getSelectFieldAlias($alias. "." . $primaryKeys[$alias])) . ", $largestValue)";
+            $fieldAlias = $this->renderArbitraryReference($this->getSelectFieldAlias($alias. "." . $primaryKeys[$alias]));
+            $sort[] = "COALESCE(s.$fieldAlias, $largestValue)";
+            if (empty($metadata) || $alias == $mainCollection) {
+                $limitSort[] = $fieldAlias;
+            }
         }
-        return ["sort" => $sort, "additionalFields" => $additionalFields];
+        return ["sort" => $sort, "limitSort" => $limitSort, "additionalFields" => $additionalFields, "nextToken" => $token];
+    }
+
+    protected function processIncludeQueryLimit($token, $joinConditions, $subqueryTemplateSql, $sortSql, $aliasedPk)
+    {
+        $limitSubquery = "";
+        if ($token instanceof Token && $token->getType() == "limit") {
+            $replacements = [];
+            foreach ($joinConditions as $collection => $condition) {
+                $replacements["%{$collection}Condition%"] = "FALSE";
+            }
+            $limitSubquery = strtr($subqueryTemplateSql, $replacements) . $sortSql;
+
+            do {
+                $limitSubquery .= " " . $this->renderToken($token);
+            } while ($token = $this->query->getNextToken());
+
+            $limitSubquery = " JOIN ($limitSubquery) l USING ($aliasedPk)";
+        }
+        return $limitSubquery;
     }
 
     /**
