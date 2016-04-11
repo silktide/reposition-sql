@@ -213,7 +213,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 
         // process limits
         $mainAliasedPk = $this->getSelectFieldAlias($mainCollection . "." . $primaryKeys[$mainCollection]);
-        $limitSubquery = $this->processIncludeQueryLimit($sortData["nextToken"], $joinConditions, $subqueryTemplateSql, $limitSort, $mainAliasedPk);
+        $limitSubquery = $this->processIncludeQueryLimit($sortData["nextToken"], $joinConditions, $collections, $subqueryTemplateSql, $limitSort, $mainAliasedPk);
 
         $fieldList = implode(", ", array_merge($this->fields, $sortData["additionalFields"]));
 
@@ -393,13 +393,13 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         return ["sort" => $sort, "limitSort" => $limitSort, "additionalFields" => $additionalFields, "nextToken" => $token];
     }
 
-    protected function processIncludeQueryLimit($token, $joinConditions, $subqueryTemplateSql, $sortSql, $aliasedPk)
+    protected function processIncludeQueryLimit($token, $joinConditions, $collections, $subqueryTemplateSql, $sortSql, $aliasedPk)
     {
         $limitSubquery = "";
         if ($token instanceof Token && $token->getType() == "limit") {
             $replacements = [];
             foreach ($joinConditions as $collection => $condition) {
-                $replacements["%{$collection}Condition%"] = "FALSE";
+                $replacements["%{$collection}Condition%"] = empty($collections[$collection])? $condition: "FALSE";
             }
             $limitSubquery = strtr($subqueryTemplateSql, $replacements) . $sortSql;
 
