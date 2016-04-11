@@ -371,8 +371,10 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
 
         foreach ($collections as $alias => $metadata) {
             /** @var EntityMetadata $metadata */
-            // don't auto generate a sort clause for the main collection if sort fields were found
-
+            // don't auto generate a sort clause if we have no metadata (e.g. collection is not an entity)
+            if (empty($metadata)) {
+                continue;
+            }
 
             // get the largest value for the field type of the PK
             $largestValue = "999999999999999999999999";
