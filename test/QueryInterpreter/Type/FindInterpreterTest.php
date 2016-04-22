@@ -228,9 +228,14 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "fields" => ["field3", "field4"]
                     ]
                 ],
-                "SELECT `one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4` " .
-                "FROM `one` LEFT JOIN `two` ON ( `one`.`one_id` = `two`.`one_id` ) " .
-                "WHERE `one`.`field1` BETWEEN :int_0 AND :int_1"
+                "SELECT s.* FROM (" .
+
+                    "SELECT " .
+                        "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, " .
+                        "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4` " .
+                    "FROM `one` LEFT JOIN `two` ON ( `one`.`one_id` = `two`.`one_id`) " .
+                    "WHERE `one`.`field1` BETWEEN :int_0 AND :int_1" .
+                ") s ORDER BY COALESCE(`s`.`one__one_id`, 999999999999999999999999), COALESCE(`s`.`two__id`, 999999999999999999999999)"
             ],
             [ // #1 two includes
                 [
@@ -276,7 +281,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "fields" => ["id", "field5", "field6"]
                     ]
                 ],
-                "SELECT * FROM (" .
+                "SELECT s.* FROM (" .
                     "SELECT " .
                         "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`one_id` AS `one__one_id`, " .
                         "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
@@ -294,7 +299,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "LEFT JOIN `two` ON (FALSE) " .
                         "LEFT JOIN `three` ON ( `one`.`one_id` = `three`.`one_id`) " .
                     "WHERE `one`.`field1` BETWEEN :int_0 AND :int_1" .
-                ") s ORDER BY COALESCE(`one__one_id`, 999999999999999999999999), COALESCE(`two__id`, 999999999999999999999999), COALESCE(`three__id`, 999999999999999999999999)"
+                ") s ORDER BY COALESCE(`s`.`one__one_id`, 999999999999999999999999), COALESCE(`s`.`two__id`, 999999999999999999999999), COALESCE(`s`.`three__id`, 999999999999999999999999)"
             ],
             [ // #2 two includes, including many to many join and target collection sort field
                 [
@@ -345,7 +350,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "fields" => ["id", "field5", "field6"]
                     ]
                 ],
-                "SELECT * FROM (" .
+                "SELECT s.* FROM (" .
                     "SELECT " .
                         "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
                         "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
@@ -363,7 +368,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "LEFT JOIN `two` ON (FALSE) " .
                         "LEFT JOIN `one_three` ON ( `one`.`id` = `one_three`.`one_id`) " .
                         "LEFT JOIN `three` ON ( `one_three`.`three_id` = `three`.`id`)" .
-                ") s ORDER BY `one__field1` DESC, COALESCE(`two__id`, 999999999999999999999999), COALESCE(`three__id`, 999999999999999999999999)"
+                ") s ORDER BY `s`.`one__field1` DESC, COALESCE(`s`.`one__id`, 999999999999999999999999), COALESCE(`s`.`two__id`, 999999999999999999999999), COALESCE(`s`.`three__id`, 999999999999999999999999)"
             ],
             [ // #3 four includes, including child relationships
                 [
@@ -429,7 +434,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "fields" => ["id", "field8"]
                     ]
                 ],
-                "SELECT * FROM (" .
+                "SELECT s.* FROM (" .
                     "SELECT " .
                         "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
                         "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
@@ -465,7 +470,7 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "LEFT JOIN `three` ON ( `one`.`id` = `three`.`one_id`) " .
                         "LEFT JOIN `four` ON (FALSE) " .
                         "LEFT JOIN `five` ON ( `three`.`id` = `five`.`three_id`)" .
-                ") s ORDER BY COALESCE(`one__id`, 999999999999999999999999), COALESCE(`two__id`, 999999999999999999999999), COALESCE(`three__id`, 999999999999999999999999), COALESCE(`four__id`, 999999999999999999999999), COALESCE(`five__id`, 999999999999999999999999)"
+                ") s ORDER BY COALESCE(`s`.`one__id`, 999999999999999999999999), COALESCE(`s`.`two__id`, 999999999999999999999999), COALESCE(`s`.`three__id`, 999999999999999999999999), COALESCE(`s`.`four__id`, 999999999999999999999999), COALESCE(`s`.`five__id`, 999999999999999999999999)"
             ]
         ];
     }
