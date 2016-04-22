@@ -53,7 +53,7 @@ class SqlNormaliser implements NormaliserInterface
             return $data;
         }
 
-        if (!isset($options["entity"])) {
+        if (!isset($options["entityClass"])) {
             throw new NormalisationException("Cannot denormalise data without knowing the main entity class");
         }
         if (!isset($options["metadataProvider"])) {
@@ -62,7 +62,7 @@ class SqlNormaliser implements NormaliserInterface
 
         /** @var EntityMetadataProviderInterface $metadataProvider */
         $this->metadataProvider = $options["metadataProvider"];
-        $metadata = $this->metadataProvider->getEntityMetadata($options["entity"]);
+        $metadata = $this->metadataProvider->getEntityMetadata($options["entityClass"]);
 
         // split fields based on prefix
         $prefixedFields = [];
@@ -107,7 +107,7 @@ class SqlNormaliser implements NormaliserInterface
         $this->primaryKeyFields = [];
         $this->treedEntities = [];
 
-        $this->createFieldTree($prefixedFields, $entityMap, $collection, $options["entity"]);
+        $this->createFieldTree($prefixedFields, $entityMap, $collection, $options["entityClass"]);
 
         reset($data);
         $result = $this->denormaliseData($data, $prefixedFields[$collection], "");
