@@ -5,7 +5,7 @@
   "homepage": "https://github.com/silktide/reposition-sql",
   "require": {
     "php": ">=5.5.0",
-    "silktide/reposition": "^1.5.13",
+    "silktide/reposition": "^1.6.0",
     "downsider/clay": "^1.1",
     "psr/log": "^1.0"
   },
