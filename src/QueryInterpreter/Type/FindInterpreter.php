@@ -384,8 +384,8 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
                 $largestValue = '\'U&"\FFFF"\'';
             }
 
-            $fieldAlias = $this->renderArbitraryReference($this->getSelectFieldAlias($alias. "." . $primaryKeys[$alias]));
-            $sort[] = "COALESCE(s.$fieldAlias, $largestValue)";
+            $fieldAlias = $this->renderArbitraryReference("s." . $this->getSelectFieldAlias($alias. "." . $primaryKeys[$alias]));
+            $sort[] = "COALESCE($fieldAlias, $largestValue)";
             if (empty($metadata) || $alias == $mainCollection) {
                 $limitSort[] = $fieldAlias;
             }
