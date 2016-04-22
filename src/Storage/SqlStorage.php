@@ -101,10 +101,10 @@ class SqlStorage implements StorageInterface
 
     /**
      * @param TokenSequencerInterface $query
-     * @param string $entityClass
-     * @return object
+     * @param array $options
+     * @return object|array
      */
-    public function query(TokenSequencerInterface $query, $entityClass)
+    public function query(TokenSequencerInterface $query, array $options = ["output" => "normalise"])
     {
         $compiledQuery = $this->interpreter->interpret($query);
 
@@ -138,15 +138,14 @@ class SqlStorage implements StorageInterface
         // close the statement to release memory as we don't need it anymore
         $statement->closeCursor();
 
-        $options = [
+        $options = array_merge($options, [
             "metadataProvider" => $this->entityMetadataProvider,
             "entityMap" => $query->getIncludes(),
-            "entity" => $entityClass,
             "trackCollectionChanges" => true
-        ];
+        ]);
 
-        if ($this->hydrator instanceof HydratorInterface && !empty($entityClass)) {
-            $response = $this->hydrator->hydrateAll($data, $entityClass, $options);
+        if ($this->hydrator instanceof HydratorInterface && $options["output"] != "raw") {
+            $response = $this->hydrator->hydrateAll($data, $options);
         } else  {
             if (!empty($newId)) {
                 $data[StorageInterface::NEW_INSERT_ID_RETURN_FIELD] = $newId;
