@@ -77,7 +77,7 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
         $options = [
             "metadataProvider" => $metadataProvider,
             "entityMap" => $entityMap,
-            "entity" => $thisEntity
+            "entityClass" => $thisEntity
         ];
 
         $result = $normaliser->denormalise($dataSet, $options);
