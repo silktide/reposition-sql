@@ -369,7 +369,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         } while (!empty($token) && $token->getType() != 'limit' && ($token = $this->query->getNextToken()));
 
         // create the "s." prefix to add to all sort references
-        $sortReferencePrefix = $this->renderArbitraryReference("s.");
+        $sortReferencePrefix = $this->renderArbitraryReference("s") . ".";
         foreach ($collections as $alias => $metadata) {
             /** @var EntityMetadata $metadata */
             // don't auto generate a sort clause if we have no metadata (e.g. collection is not an entity)
