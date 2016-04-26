@@ -2,195 +2,195 @@ parameters:
     sqlStatementDefinition:
         find:
             -
-                type: function
+                type: "function"
                 optional: true
                 multiple: true
             -
-                type: join
+                type: "join"
                 optional: true
                 multiple: true
             -
-                type: where
+                type: "where"
                 optional: true
             -
-                type: group
+                type: "group"
                 optional: true
             -
-                type: sort
+                type: "sort"
                 optional: true
             -
-                type: limit
+                type: "limit"
                 optional: true
 
         save:
             -
-                name: entity
+                name: "entity"
                 multiple: true
 
         delete:
             -
-                type: join
+                type: "join"
                 optional: true
                 multiple: true
             -
-                type: where
+                type: "where"
                 optional: true
             -
-                type: sort
+                type: "sort"
                 optional: true
             -
-                type: limit
+                type: "limit"
                 optional: true
 
         update:
             -
-                type: assignment
+                type: "assignment"
                 multiple: true
             -
-                type: where
+                type: "where"
                 optional: true
             -
-                type: sort
+                type: "sort"
                 optional: true
             -
-                type: limit
+                type: "limit"
                 optional: true
 
         function:
             -
-                name: function
+                name: "function"
             -
-                name: open
+                name: "open"
             -
-                type: expression
+                type: "expression"
                 optional: true
                 multiple: true
             -
-                name: close
+                name: "close"
 
         join:
             -
                 any:
                     type:
-                        - full-outer
+                        - "full-outer"
                     name:
-                        - left
-                        - right
-                        - inner
+                        - "left"
+                        - "right"
+                        - "inner"
             -
-                name: join
+                name: "join"
             -
-                name: collection
+                name: "collection"
             -
-                name: on
+                name: "on"
             -
-                name: open
+                name: "open"
             -
-                type: condition
+                type: "condition"
             -
-                type: logic-condition
+                type: "logic-condition"
                 optional: true
                 multiple: true
             -
-                name: close
+                name: "close"
 
         full-outer:
             -
-                name: full
+                name: "full"
             -
-                name: outer
+                name: "outer"
 
         where:
             -
-                name: where
+                name: "where"
             -
-                type: condition
+                type: "condition"
             -
-                type: logic-condition
+                type: "logic-condition"
                 optional: true
                 multiple: true
 
         condition:
             -
-                name: not
+                name: "not"
                 optional: true
             -
-                name: open
+                name: "open"
                 optional: true
-                flag: isOpen
+                flag: "isOpen"
             -
                 any:
                     type:
-                        - function
-                        - value
+                        - "function"
+                        - "value"
                     name:
-                        - field
+                        - "field"
             -
                 any:
                     type:
-                        - between-expression
-                        - in-expression
-                        - operator-expression
+                        - "between-expression"
+                        - "in-expression"
+                        - "operator-expression"
                 optional: true
             -
-                name: close
-                optional: isOpen
+                name: "close"
+                optional: "isOpen"
 
         expression:
             -
-                name: open
+                name: "open"
                 optional: true
-                flag: isOpen
+                flag: "isOpen"
             -
-                type: operand
+                type: "operand"
             -
-                type:  operator-expression
+                type: "operator-expression"
                 optional: true
             -
-                name: close
-                optional: isOpen
+                name: "close"
+                optional: "isOpen"
 
         closed-expression:
             -
-                name: open
+                name: "open"
             -
-                type: operand
+                type: "operand"
             -
-                type:  operator-expression
+                type: "operator-expression"
                 optional: true
             -
-                name: close
+                name: "close"
 
         assignment:
             -
-                name: field
+                name: "field"
             -
-                type: operator-expression
+                type: "operator-expression"
 
         logic-condition:
             -
-                type: logic-operator
+                type: "logic-operator"
             -
-                name: open
+                name: "open"
                 optional: true
-                flag: isOpen
+                flag: "isOpen"
             -
-                type: condition
+                type: "condition"
             -
-                type: logic-condition
+                type: "logic-condition"
                 optional: true
                 multiple: true
             -
-                name: close
+                name: "close"
                 optional: isOpen
 
         operator-expression:
             -
-                name: operator
+                name: "operator"
             -
-                type: operand
+                type: "operand"
             -
-                type: operator-expression
+                type: "operator-expression"
                 optional: true
 
         between-expression:
@@ -198,100 +198,100 @@ parameters:
                 name: operator
                 value: between
             -
-                type: operand
+                type: "operand"
             -
                 name: and
             -
-                type: operand
+                type: "operand"
 
         in-expression:
             -
-                name: operator
+                name: "operator"
                 value: in
             -
                 name: open
             -
-                type: value
+                type: "value"
                 multiple: true
             -
-                name: close
+                name: "close"
 
         operand:
             -
-                name: not
+                name: "not"
                 optional: true
             -
                 any:
                     type:
-                        - closed-expression
-                        - function
-                        - value
+                        - "closed-expression"
+                        - "function"
+                        - "value"
                     name:
-                        - field
+                        - "field"
 
         value:
             -
                 any:
                     name:
-                        - string
-                        - int
-                        - integer
-                        - float
-                        - double
-                        - bool
-                        - boolean
+                        - "string"
+                        - "int"
+                        - "integer"
+                        - "float"
+                        - "double"
+                        - "bool"
+                        - "boolean"
                         - "null"
 
         logic-operator:
             -
                 any:
                     name:
-                        - and
-                        - or
+                        - "and"
+                        - "or"
 
         group:
             -
-                name: group
+                name: "group"
             -
-                name: field
+                name: "field"
                 multiple: true
 
         sort:
             -
-                name: sort
+                name: "sort"
             -
-                type: sort-reference
+                type: "sort-reference"
                 multiple: true
 
         sort-reference:
             -
                 any:
                     type:
-                        - expression
+                        - "expression"
                     name:
-                        - field
+                        - "field"
             -
-                name: sort-direction
+                name: "sort-direction"
                 optional: true
 
         limit:
             -
-                name: limit
+                name: "limit"
             -
                 any:
                     name:
-                        - int
-                        - integer
+                        - "int"
+                        - "integer"
             -
-                type: offset
+                type: "offset"
                 optional: true
 
         offset:
             -
-                name: offset
+                name: "offset"
                 optional: true
             -
                 any:
                     name:
-                        - int
-                        - integer
+                        - "int"
+                        - "integer"
