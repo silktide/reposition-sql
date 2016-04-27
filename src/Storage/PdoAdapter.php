@@ -67,7 +67,9 @@ class PdoAdapter
         $dsn = strtr($this->dsnTemplate, $replacements);
 
         $this->pdo = new \PDO($dsn, $this->credentials->getUsername(), $this->credentials->getPassword());
-        $this->pdo->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, $this->useMysqlBufferedQueries);
+        if ($driver == "mysql") {
+            $this->pdo->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, $this->useMysqlBufferedQueries);
+        }
     }
 
     /**
