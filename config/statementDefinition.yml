@@ -257,7 +257,10 @@ parameters:
             -
                 name: "group"
             -
-                name: "field"
+                any:
+                    name:
+                        - "field"
+                        - "function"
                 multiple: true
 
         sort:
