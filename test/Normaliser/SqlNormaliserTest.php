@@ -240,7 +240,34 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                 [
                     ["field1" => '["this": "is", invalid: json]', "field2" => '"this is an encapsulated string"']
                 ]
+            ],
+            [ // #11 multiple records, no children
+                [
+                    ["one__field1" => "value1", "one__field2" => "value2"],
+                    ["one__field1" => "value3", "one__field2" => "value4"],
+                    ["one__field1" => "value5", "one__field2" => "value6"],
+                    ["one__field1" => "value7", "one__field2" => "value8"]
+                ],
+                [
+                    ["field1" => "value1", "field2" => "value2"],
+                    ["field1" => "value3", "field2" => "value4"],
+                    ["field1" => "value5", "field2" => "value6"],
+                    ["field1" => "value7", "field2" => "value8"]
+                ]
+            ],
+            [ // #12 no children, no primary key
+                [
+                    ["one__field2" => "value1", "one__field3" => "value2"],
+                    ["one__field2" => "value3", "one__field3" => "value4"],
+                    ["one__field2" => "value5", "one__field3" => "value6"]
+                ],
+                [
+                    ["field2" => "value1", "field3" => "value2"],
+                    ["field2" => "value3", "field3" => "value4"],
+                    ["field2" => "value5", "field3" => "value6"]
+                ]
             ]
+
         ];
     }
 

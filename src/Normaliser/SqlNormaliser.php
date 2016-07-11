@@ -190,16 +190,22 @@ class SqlNormaliser implements NormaliserInterface
         }
 
         // find the first field eligible to be the new row field for any child relationships
-        $firstField = null;
-        foreach ($fields as $field) {
-            if (!is_array($field) && !empty($this->primaryKeyFields[$field])) {
-                $firstField = $field;
-                break;
+        if (!count($this->primaryKeyFields) > 1) {
+            $firstField = null;
+            foreach ($fields as $field) {
+                if (!is_array($field) && !empty($this->primaryKeyFields[$field])) {
+                    $firstField = $field;
+                    break;
+                }
             }
-        }
-        if (is_null($firstField)) {
-            // this shouldn't happen as there would have been no field prefix for the relationships to have been added to, but there's no harm in double checking
-            throw new NormalisationException("Cannot denormalise data. Entities must have a field defined that is not a child relationship");
+
+            if (is_null($firstField)) {
+                // this shouldn't happen as there would have been no field prefix for the relationships to have been added to, but there's no harm in double checking
+                throw new NormalisationException("Cannot denormalise data. Entities must have a field defined that is not a child relationship");
+            }
+
+        } else {
+            $firstField = key($this->primaryKeyFields);
         }
 
         // parse the data and create the denormalised data tree
@@ -234,8 +240,6 @@ class SqlNormaliser implements NormaliserInterface
                     }
                     $denormalisedRow[$newField] = $fieldValue;
                 }
-
-
 
             }
 
