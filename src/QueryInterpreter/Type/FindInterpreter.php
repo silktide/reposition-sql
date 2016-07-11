@@ -30,14 +30,21 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         $token = $query->getNextToken();
 
         $this->fields = [];
-        while (!empty($token) && $token->getType() == "function") {
-            // render the aggregate function SQL e.g. COUNT(*), SUM(field), etc...
-            /** @var Value $token */
-            $fieldSql = $this->renderFunction($token);
+        while (!empty($token) && in_array($token->getType(), ["function", "field"])) {
+            if ($token->getType() == "function") {
+                /** @var Value $token */
+                // render the aggregate function SQL e.g. COUNT(*), SUM(field), etc...
+                $fieldSql = $this->renderFunction($token);
 
-            // create an alias for this aggregate and append the SQL
-            $collectionAlias = $this->findFreeAlias($token->getValue(), $this->fields);
-            $fieldSql .= $this->renderAlias($collectionAlias);
+                // create an alias for this aggregate and append the SQL
+                $collectionAlias = $this->findFreeAlias($token->getValue(), $this->fields);
+                $fieldSql .= $this->renderAlias($collectionAlias);
+            } else {
+                /** @var Reference $token */
+                $fieldName = $mainCollection . "." . $token->getValue();
+                $collectionAlias = $this->getSelectFieldAlias($fieldName);
+                $fieldSql = $this->renderArbitraryReference($fieldName, $collectionAlias);
+            }
 
             // add the sql to the fields array and load the next token
             $this->fields[$collectionAlias] = $fieldSql;
