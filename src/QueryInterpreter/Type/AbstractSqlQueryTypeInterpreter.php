@@ -72,7 +72,7 @@ abstract class AbstractSqlQueryTypeInterpreter
             case "close":
                 return ")";
             case "group":
-                return "GROUP BY";
+                return $this->renderGroupBy();
             case "sort":
                 return $this->renderSort();
             case "function":
@@ -231,6 +231,32 @@ abstract class AbstractSqlQueryTypeInterpreter
         // render sort list
         $sql .= implode(",", $order);
 
+        return $sql;
+    }
+
+    protected function renderGroupBy()
+    {
+        $sql = "GROUP BY";
+        $groups = [];
+        $currentItem = "";
+
+        while ($token = $this->query->getNextToken()) {
+            if (in_array($token->getType(), ["sort", "limit"])) {
+                $groups[] = $currentItem;
+                break;
+            }
+            $currentItem .= $this->renderToken($token);
+            // if we have a field
+            if (in_array($token->getType(), ["field", "close"])) {
+                $groups[] = $currentItem;
+                $currentItem = "";
+            }
+        }
+
+        $sql .= " " . implode(", ", $groups);
+        if ($token != false) {
+            $sql .= " " . $this->renderToken($token);
+        }
         return $sql;
     }
 
