@@ -2,7 +2,11 @@ parameters:
     sqlStatementDefinition:
         find:
             -
-                type: "function"
+                any:
+                    type:
+                        - "function"
+                    name:
+                        - "field"
                 optional: true
                 multiple: true
             -
