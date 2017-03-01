@@ -208,15 +208,27 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                 ["two" => $two, "three" => $three],
                 "one"
             ],
-            [ // #8 single record, multi-level relationships
+            [ // #8 multiple records, multi-level relationships
                 [
-                    ["one__field1" => "value1", "one__field2" => "value2", "four__field3" => "value3", "four__field4" => "value4", "three__field5" => "value5", "three__field6" => "value6"]
+                    ["one__field1" => "value1", "one__field2" => "value2", "four__field3" => "value3", "four__field4" => "value4", "three__field5" => "value5", "three__field6" => "value6"],
+                    ["one__field1" => "value1", "one__field2" => "value2", "four__field3" => "value7", "four__field4" => "value8", "three__field5" => "value5", "three__field6" => "value6"],
+                    ["one__field1" => "value9", "one__field2" => "value10", "four__field3" => "value11", "four__field4" => "value12", "three__field5" => "value13", "three__field6" => "value14"],
+                    ["one__field1" => "value9", "one__field2" => "value10", "four__field3" => "value15", "four__field4" => "value16", "three__field5" => "value13", "three__field6" => "value14"],
+                    ["one__field1" => "value9", "one__field2" => "value10", "four__field3" => "value17", "four__field4" => "value18", "three__field5" => "value13", "three__field6" => "value14"]
                 ],
                 [
                     ["field1" => "value1", "field2" => "value2", "threes" => [
-                            ["field5" => "value5", "field6" => "value6", "fours" => [
-                                ["field3" => "value3", "field4" => "value4"]
-                            ]]
+                        ["field5" => "value5", "field6" => "value6", "fours" => [
+                            ["field3" => "value3", "field4" => "value4"],
+                            ["field3" => "value7", "field4" => "value8"]
+                        ]]
+                    ]],
+                    ["field1" => "value9", "field2" => "value10", "threes" => [
+                        ["field5" => "value13", "field6" => "value14", "fours" => [
+                            ["field3" => "value11", "field4" => "value12"],
+                            ["field3" => "value15", "field4" => "value16"],
+                            ["field3" => "value17", "field4" => "value18"]
+                        ]]
                     ]]
                 ],
                 ["four" => $four, "three" => $three],
