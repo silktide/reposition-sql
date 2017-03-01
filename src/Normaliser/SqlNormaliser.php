@@ -26,6 +26,11 @@ class SqlNormaliser implements NormaliserInterface
     protected $treedEntities = [];
 
     /**
+     * @var array
+     */
+    protected $childRowAliases = [];
+
+    /**
      * format data into the DB format
      *
      * @param array $data
@@ -87,7 +92,7 @@ class SqlNormaliser implements NormaliserInterface
             if (isset($fields[$primaryKey])) {
                 $this->primaryKeyFields = [$fields[$primaryKey] => true];
             }
-            return $this->denormaliseData($data, $fields, "");
+            return $this->denormaliseData($data, $fields);
         }
 
         // complex result set
@@ -106,11 +111,12 @@ class SqlNormaliser implements NormaliserInterface
         // reset primary key fields
         $this->primaryKeyFields = [];
         $this->treedEntities = [];
+        $this->childRowAliases = [];
 
         $this->createFieldTree($prefixedFields, $entityMap, $collection, $options["entityClass"]);
 
         reset($data);
-        $result = $this->denormaliseData($data, $prefixedFields[$collection], "");
+        $result = $this->denormaliseData($data, $prefixedFields[$collection], $collection);
 
         return  $result;
     }
@@ -122,7 +128,7 @@ class SqlNormaliser implements NormaliserInterface
         // store the primary key field for this entity
         $primaryKey = $metadata->getPrimaryKey();
         if (!empty($fields[$alias][$primaryKey])) {
-            $this->primaryKeyFields[$fields[$alias][$primaryKey]] = true;
+            $this->primaryKeyFields[$alias] = $fields[$alias][$primaryKey];
         }
 
         $availableJoins = $metadata->getRelationships();
@@ -168,44 +174,28 @@ class SqlNormaliser implements NormaliserInterface
             }
 
             $fields[$alias][$property] = &$fields[$childAlias];
+            $this->childRowAliases[$alias . "." . $property] = $childAlias;
 
             $this->createFieldTree($fields, $entityMap, $childAlias, $childEntity);
         }
     }
 
-    protected function denormaliseData(array &$data, array $fields, $newRowField)
+    protected function denormaliseData(array &$data, array $fields, $entityAlias = "", $parentAlias = "")
     {
         $row = current($data);
         $allNewRows = false;
         $newRowValue = null;
+        $newRowField = null;
 
         // check if these are all new rows or if we have a value that can be used to check for changes, where a change in value signifies a new row
-        if (empty($newRowField)) {
+        if (empty($parentAlias)) {
             $allNewRows = true;
         } else {
+            $newRowField = $this->primaryKeyFields[$parentAlias];
             if (!isset($row[$newRowField])) {
                 throw new NormalisationException("Cannot denormalise data. The field '$newRowField' doesn't exist in the result set, so we're unable to check when a new row is required");
             }
             $newRowValue = $row[$newRowField];
-        }
-
-        // find the first field eligible to be the new row field for any child relationships
-        if (!count($this->primaryKeyFields) > 1) {
-            $firstField = null;
-            foreach ($fields as $field) {
-                if (!is_array($field) && !empty($this->primaryKeyFields[$field])) {
-                    $firstField = $field;
-                    break;
-                }
-            }
-
-            if (is_null($firstField)) {
-                // this shouldn't happen as there would have been no field prefix for the relationships to have been added to, but there's no harm in double checking
-                throw new NormalisationException("Cannot denormalise data. Entities must have a field defined that is not a child relationship");
-            }
-
-        } else {
-            $firstField = key($this->primaryKeyFields);
         }
 
         // parse the data and create the denormalised data tree
@@ -218,8 +208,14 @@ class SqlNormaliser implements NormaliserInterface
                     continue;
                 }
                 if (is_array($field)) {
+                    $key = $entityAlias . "." . $newField;
+                    if (empty($this->childRowAliases[$key])) {
+                        throw new \Exception("No child row alias found for the key $key");
+                    }
+                    $childRowAlias = $this->childRowAliases[$key];
+
                     try {
-                        $denormalisedRow[$newField] = $this->denormaliseData($data, $field, $firstField);
+                        $denormalisedRow[$newField] = $this->denormaliseData($data, $field, $childRowAlias, $entityAlias);
                     } catch (NormalisationException $e) {
                         // ignore this child; record set was probably null. Means there was no child object for the row.
                     }
