@@ -180,22 +180,19 @@ class SqlNormaliser implements NormaliserInterface
         }
     }
 
-    protected function denormaliseData(array &$data, array $fields, $entityAlias = "", $parentAlias = "")
+    protected function denormaliseData(array &$data, array $fields, $entityAlias = "", $parentAliases = [])
     {
         $row = current($data);
         $allNewRows = false;
-        $newRowValue = null;
-        $newRowField = null;
+        $newRowId = null;
+        $newRowFields = [];
 
         // check if these are all new rows or if we have a value that can be used to check for changes, where a change in value signifies a new row
-        if (empty($parentAlias)) {
+        if (empty($parentAliases)) {
             $allNewRows = true;
         } else {
-            $newRowField = $this->primaryKeyFields[$parentAlias];
-            if (!isset($row[$newRowField])) {
-                throw new NormalisationException("Cannot denormalise data. The field '$newRowField' doesn't exist in the result set, so we're unable to check when a new row is required");
-            }
-            $newRowValue = $row[$newRowField];
+            $newRowFields = $this->getPrimaryKeyFields($parentAliases);
+            $newRowId = $this->getRowId($row, $newRowFields);
         }
 
         // parse the data and create the denormalised data tree
@@ -215,7 +212,7 @@ class SqlNormaliser implements NormaliserInterface
                     $childRowAlias = $this->childRowAliases[$key];
 
                     try {
-                        $denormalisedRow[$newField] = $this->denormaliseData($data, $field, $childRowAlias, $entityAlias);
+                        $denormalisedRow[$newField] = $this->denormaliseData($data, $field, $childRowAlias, array_merge($parentAliases, [$entityAlias]));
                     } catch (NormalisationException $e) {
                         // ignore this child; record set was probably null. Means there was no child object for the row.
                     }
@@ -247,7 +244,7 @@ class SqlNormaliser implements NormaliserInterface
 
             $denormalisedData[] = $denormalisedRow;
             $row = next($data);
-        } while (!empty($row) && ($allNewRows || $row[$newRowField] == $newRowValue));
+        } while (!empty($row) && ($allNewRows || $this->getRowId($row, $newRowFields) == $newRowId));
 
         if ($stepDataBackOne) {
             // rewind the data array by 1, so we don't skip any rows if this has been called recursively
@@ -262,6 +259,27 @@ class SqlNormaliser implements NormaliserInterface
         }
 
         return $denormalisedData;
+    }
+
+    protected function getPrimaryKeyFields(array $aliases)
+    {
+        $fields = [];
+        foreach ($aliases as $alias) {
+            $fields[] = $this->primaryKeyFields[$alias];
+        }
+        return $fields;
+    }
+
+    protected function getRowId(array $row, array $fields)
+    {
+        $rowValues = [];
+        foreach ($fields as $field) {
+            if (!isset($row[$field])) {
+                throw new NormalisationException("Cannot denormalise data. The field '$field' doesn't exist in the result set, so we're unable to check when a new row is required");
+            }
+            $rowValues[] = $row[$field];
+        }
+        return implode("-", $rowValues);
     }
 
     protected function isEmptyEntityRow($row)
