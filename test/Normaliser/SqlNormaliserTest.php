@@ -234,7 +234,33 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                 ["four" => $four, "three" => $three],
                 "one"
             ],
-            [ // #9 decode valid JSON fields
+            [ // #9 multiple records, multi-level relationships, same child entities
+                [
+                    ["one__field1" => "value1", "one__field2" => "value2", "four__field3" => "value3", "four__field4" => "value4", "three__field5" => "value5", "three__field6" => "value6"],
+                    ["one__field1" => "value9", "one__field2" => "value10", "four__field3" => "value3", "four__field4" => "value4", "three__field5" => "value5", "three__field6" => "value6"],
+                    ["one__field1" => "value11", "one__field2" => "value12", "four__field3" => "value3", "four__field4" => "value4", "three__field5" => "value5", "three__field6" => "value6"],
+                ],
+                [
+                    ["field1" => "value1", "field2" => "value2", "threes" => [
+                        ["field5" => "value5", "field6" => "value6", "fours" => [
+                            ["field3" => "value3", "field4" => "value4"]
+                        ]]
+                    ]],
+                    ["field1" => "value9", "field2" => "value10", "threes" => [
+                        ["field5" => "value5", "field6" => "value6", "fours" => [
+                            ["field3" => "value3", "field4" => "value4"]
+                        ]]
+                    ]],
+                    ["field1" => "value11", "field2" => "value12", "threes" => [
+                        ["field5" => "value5", "field6" => "value6", "fours" => [
+                            ["field3" => "value3", "field4" => "value4"]
+                        ]]
+                    ]]
+                ],
+                ["four" => $four, "three" => $three],
+                "one"
+            ],
+            [ // #10 decode valid JSON fields
                 [
                     ["field1" => '["one", "two", "three", "four"]', "field2" => '{"one": "one", "two": "two", "three": "three", "four": "four"}']
                 ],
@@ -245,7 +271,7 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                     ]
                 ]
             ],
-            [ // #10 handle invalid JSON and non-JSON
+            [ // #11 handle invalid JSON and non-JSON
                 [
                     ["field1" => '["this": "is", invalid: json]', "field2" => '"this is an encapsulated string"']
                 ],
@@ -253,7 +279,7 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                     ["field1" => '["this": "is", invalid: json]', "field2" => '"this is an encapsulated string"']
                 ]
             ],
-            [ // #11 multiple records, no children
+            [ // #12 multiple records, no children
                 [
                     ["one__field1" => "value1", "one__field2" => "value2"],
                     ["one__field1" => "value3", "one__field2" => "value4"],
@@ -267,7 +293,7 @@ class SqlNormaliserTest extends \PHPUnit_Framework_TestCase {
                     ["field1" => "value7", "field2" => "value8"]
                 ]
             ],
-            [ // #12 no children, no primary key
+            [ // #13 no children, no primary key
                 [
                     ["one__field2" => "value1", "one__field3" => "value2"],
                     ["one__field2" => "value3", "one__field3" => "value4"],
