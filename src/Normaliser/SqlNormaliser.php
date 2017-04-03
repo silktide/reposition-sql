@@ -183,6 +183,12 @@ class SqlNormaliser implements NormaliserInterface
     protected function denormaliseData(array &$data, array $fields, $entityAlias = "", $parentAliases = [])
     {
         $row = current($data);
+
+        // failsafe to catch when there is no more data to process
+        if (empty($row)) {
+            throw new NormalisationException("No more data exists. Entity: `$entityAlias`, Parent: `$parentAliases`");
+        }
+
         $allNewRows = false;
         $newRowId = null;
         $newRowFields = [];
