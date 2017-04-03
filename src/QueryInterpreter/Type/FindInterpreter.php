@@ -135,6 +135,8 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         // parse the tokens for join conditions
         $joinConditions = [];
         $joinMap = [];
+        $sequenceInWhereClause = false;
+        $collectionsInWhereClause = [];
 
         while (!empty($token) && !in_array($token->getType(), ["group", "sort", "limit"])) {
             $subqueryTemplateSql .= " " . $this->renderToken($token);
@@ -185,6 +187,25 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
                 $subqueryTemplateSql .= $this->renderToken($token); // )
             }
 
+            if ($sequenceInWhereClause && $token->getType() == "field") {
+                // record that this field's collection is used in the where clause
+                /** @var Reference $token */
+                $field = $token->getValue();
+                $refs = explode(".", $field);
+
+                // remove the field ref and leave the collection ref, if it exists
+                array_pop($refs);
+
+                if (!empty($refs)) {
+                    $collection = array_pop($refs);
+                    $collectionsInWhereClause[$collection] = true;
+                }
+            }
+
+            if ($token->getType() == "where") {
+                $sequenceInWhereClause = true;
+            }
+
             $token = $this->query->getNextToken();
         };
 
@@ -199,22 +220,47 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         // recursively parse the tree into join lists
         $joinLists = $this->parseJoinTree($joinTree, $collections);
 
+        $sortData = $this->processSortFields($token, $collections, $mainCollection, $primaryKeys);
+
+        $allFields = array_merge($this->fields, $sortData["additionalFields"]);
+
+        // find all collection lists that have at least one collection in the where clause and add all of them
+        foreach ($joinLists as $collectionList) {
+            $list = array_flip($collectionList);
+            if (!empty(array_intersect_key($collectionsInWhereClause, $list))) {
+                $collectionsInWhereClause = array_replace($collectionsInWhereClause, $list);
+            }
+        }
+
         // create the SQL for each subquery
         $subqueries = [];
         foreach ($joinLists as $collectionList) {
             $templateJoinConditions = $joinConditions;
             $replacements = [];
+
+            $subqueryFields = $allFields;
+
             foreach ($templateJoinConditions as $collection => $condition) {
-                // if this is a collection that were including and that isn't in the collection list, set it's join condition to "[primary key] = NULL"
+                // if this is a collection that were including and that isn't in the collection list, exclude it from the subquery
                 if (isset($collections[$collection]) && !in_array($collection, $collectionList)) {
-                    $condition = "FALSE";
+                    if (!isset($collectionsInWhereClause[$collection])) {
+                        // we don't need this join at all
+                        $condition = "FALSE";
+                    } else {
+                        // we need the join, but mask this collections fields
+                        foreach ($subqueryFields as $alias => $fieldSql) {
+                            if (strpos($alias, $collection . "__") !== false) {
+                                $subqueryFields[$alias] = "NULL" . substr($fieldSql, stripos($fieldSql, " as "));
+                            }
+                        }
+                        $replacements["{{fieldList}}"] = implode(", ", $subqueryFields);
+                    }
                 }
                 $replacements["%{$collection}Condition%"] = $condition;
             }
             $subqueries[] = strtr($subqueryTemplateSql, $replacements);
         }
 
-        $sortData = $this->processSortFields($token, $collections, $mainCollection, $primaryKeys);
         $sortSql = empty($sortData["sort"])? "": " ORDER BY " . implode(", ", $sortData["sort"]);
         $limitSort = empty($sortData["limitSort"])? "": " ORDER BY " . implode(", ", $sortData["limitSort"]);
 
@@ -222,7 +268,7 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         $mainAliasedPk = $this->getSelectFieldAlias($mainCollection . "." . $primaryKeys[$mainCollection]);
         $limitSubquery = $this->processIncludeQueryLimit($sortData["nextToken"], $joinConditions, $collections, $subqueryTemplateSql, $limitSort, $mainAliasedPk);
 
-        $fieldList = implode(", ", array_merge($this->fields, $sortData["additionalFields"]));
+        $fieldList = implode(", ", $allFields);
 
         $sql = "SELECT s.* FROM (" . implode(" UNION ", $subqueries) . ") s";
         $sql .= $limitSubquery;
