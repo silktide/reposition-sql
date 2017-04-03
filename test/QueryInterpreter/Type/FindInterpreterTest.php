@@ -536,6 +536,161 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                 "WHERE `two`.`field3` BETWEEN :int_0 AND :int_1" .
                 ") s ORDER BY COALESCE(`s`.`one__one_id`, 999999999999999999999999), COALESCE(`s`.`two__id`, 999999999999999999999999), COALESCE(`s`.`three__id`, 999999999999999999999999)"
             ],
+            [ // #5 deep relationships with included collections referenced in the where clause
+                [
+                    ["token", "left"],
+                    ["token", "join"],
+                    ["reference", "collection", "two", ""],
+                    ["token", "on"],
+                    ["token", "open"],
+                    ["reference", "field", "one.id", ""],
+                    ["value", "operator", "="],
+                    ["reference", "field", "two.one_id", ""],
+                    ["token", "close"],
+                    ["token", "left"],
+                    ["token", "join"],
+                    ["reference", "collection", "three", ""],
+                    ["token", "on"],
+                    ["token", "open"],
+                    ["reference", "field", "one.id", ""],
+                    ["value", "operator", "="],
+                    ["reference", "field", "three.one_id", ""],
+                    ["token", "close"],
+                    ["token", "left"],
+                    ["token", "join"],
+                    ["reference", "collection", "four", ""],
+                    ["token", "on"],
+                    ["token", "open"],
+                    ["reference", "field", "three.id", ""],
+                    ["value", "operator", "="],
+                    ["reference", "field", "four.three_id", ""],
+                    ["token", "close"],
+                    ["token", "where"],
+                    ["reference", "field", "four.field7", ""],
+                    ["value", "operator", "="],
+                    ["value", "int", 2]
+                ],
+                [
+                    "one" => [
+                        "class" => "OneModel",
+                        "fields" => ["id", "field1", "field2"],
+                        "dontInclude" => true
+                    ],
+                    "two" => [
+                        "class" => "TwoModel",
+                        "fields" => ["id", "field3", "field4"]
+                    ]
+                    ,
+                    "three" => [
+                        "class" => "ThreeModel",
+                        "fields" => ["id", "field5", "field6"]
+                    ],
+                    "four" => [
+                        "class" => "FourModel",
+                        "fields" => ["id", "field7"]
+                    ]
+                ],
+                "SELECT s.* FROM (" .
+                "SELECT " .
+                "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
+                "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
+                "NULL AS `three__field5`, NULL AS `three__field6`, NULL AS `three__id`, " .
+                "NULL AS `four__field7`, NULL AS `four__id` " .
+                "FROM `one` " .
+                "LEFT JOIN `two` ON ( `one`.`id` = `two`.`one_id`) " .
+                "LEFT JOIN `three` ON ( `one`.`id` = `three`.`one_id`) " .
+                "LEFT JOIN `four` ON ( `three`.`id` = `four`.`three_id`) " .
+                "WHERE `four`.`field7` = :int_0 " .
+                "UNION " .
+                "SELECT " .
+                "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
+                "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
+                "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id`, " .
+                "`four`.`field7` AS `four__field7`, `four`.`id` AS `four__id` " .
+                "FROM `one` " .
+                "LEFT JOIN `two` ON (FALSE) " .
+                "LEFT JOIN `three` ON ( `one`.`id` = `three`.`one_id`) " .
+                "LEFT JOIN `four` ON ( `three`.`id` = `four`.`three_id`) " .
+                "WHERE `four`.`field7` = :int_0" .
+                ") s ORDER BY COALESCE(`s`.`one__id`, 999999999999999999999999), COALESCE(`s`.`two__id`, 999999999999999999999999), COALESCE(`s`.`three__id`, 999999999999999999999999), COALESCE(`s`.`four__id`, 999999999999999999999999)"
+            ],
+            [ // #6 deep relationships with a common collection referenced in the where clause
+                [
+                    ["token", "left"],
+                    ["token", "join"],
+                    ["reference", "collection", "three", ""],
+                    ["token", "on"],
+                    ["token", "open"],
+                    ["reference", "field", "one.id", ""],
+                    ["value", "operator", "="],
+                    ["reference", "field", "three.one_id", ""],
+                    ["token", "close"],
+                    ["token", "left"],
+                    ["token", "join"],
+                    ["reference", "collection", "four", ""],
+                    ["token", "on"],
+                    ["token", "open"],
+                    ["reference", "field", "three.id", ""],
+                    ["value", "operator", "="],
+                    ["reference", "field", "four.three_id", ""],
+                    ["token", "close"],
+                    ["token", "left"],
+                    ["token", "join"],
+                    ["reference", "collection", "five", ""],
+                    ["token", "on"],
+                    ["token", "open"],
+                    ["reference", "field", "three.id", ""],
+                    ["value", "operator", "="],
+                    ["reference", "field", "five.three_id", ""],
+                    ["token", "close"],
+                    ["token", "where"],
+                    ["reference", "field", "three.field5", ""],
+                    ["value", "operator", "="],
+                    ["value", "int", 2]
+                ],
+                [
+                    "one" => [
+                        "class" => "OneModel",
+                        "fields" => ["id", "field1", "field2"],
+                        "dontInclude" => true
+                    ],
+                    "three" => [
+                        "class" => "ThreeModel",
+                        "fields" => ["id", "field5", "field6"]
+                    ],
+                    "four" => [
+                        "class" => "FourModel",
+                        "fields" => ["id", "field7"]
+                    ],
+                    "five" => [
+                        "class" => "FiveModel",
+                        "fields" => ["id", "field8"]
+                    ]
+                ],
+                "SELECT s.* FROM (" .
+                "SELECT " .
+                "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
+                "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id`, " .
+                "`four`.`field7` AS `four__field7`, `four`.`id` AS `four__id`, " .
+                "NULL AS `five__field8`, NULL AS `five__id` " .
+                "FROM `one` " .
+                "LEFT JOIN `three` ON ( `one`.`id` = `three`.`one_id`) " .
+                "LEFT JOIN `four` ON ( `three`.`id` = `four`.`three_id`) " .
+                "LEFT JOIN `five` ON ( `three`.`id` = `five`.`three_id`) " .
+                "WHERE `three`.`field5` = :int_0 " .
+                "UNION " .
+                "SELECT " .
+                "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`id` AS `one__id`, " .
+                "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id`, " .
+                "NULL AS `four__field7`, NULL AS `four__id`, " .
+                "`five`.`field8` AS `five__field8`, `five`.`id` AS `five__id` " .
+                "FROM `one` " .
+                "LEFT JOIN `three` ON ( `one`.`id` = `three`.`one_id`) " .
+                "LEFT JOIN `four` ON ( `three`.`id` = `four`.`three_id`) " .
+                "LEFT JOIN `five` ON ( `three`.`id` = `five`.`three_id`) " .
+                "WHERE `three`.`field5` = :int_0" .
+                ") s ORDER BY COALESCE(`s`.`one__id`, 999999999999999999999999), COALESCE(`s`.`three__id`, 999999999999999999999999), COALESCE(`s`.`four__id`, 999999999999999999999999), COALESCE(`s`.`five__id`, 999999999999999999999999)"
+            ]
         ];
     }
 
