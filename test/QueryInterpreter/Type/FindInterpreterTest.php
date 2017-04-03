@@ -471,7 +471,71 @@ class FindInterpreterTest extends \PHPUnit_Framework_TestCase {
                         "LEFT JOIN `four` ON (FALSE) " .
                         "LEFT JOIN `five` ON ( `three`.`id` = `five`.`three_id`)" .
                 ") s ORDER BY COALESCE(`s`.`one__id`, 999999999999999999999999), COALESCE(`s`.`two__id`, 999999999999999999999999), COALESCE(`s`.`three__id`, 999999999999999999999999), COALESCE(`s`.`four__id`, 999999999999999999999999), COALESCE(`s`.`five__id`, 999999999999999999999999)"
-            ]
+            ],
+            [ // #4 multiple includes with one reference in the where clause
+                [
+                    ["token", "left"],
+                    ["token", "join"],
+                    ["reference", "collection", "two", ""],
+                    ["token", "on"],
+                    ["token", "open"],
+                    ["reference", "field", "one.one_id", ""],
+                    ["value", "operator", "="],
+                    ["reference", "field", "two.one_id", ""],
+                    ["token", "close"],
+                    ["token", "left"],
+                    ["token", "join"],
+                    ["reference", "collection", "three", ""],
+                    ["token", "on"],
+                    ["token", "open"],
+                    ["reference", "field", "one.one_id", ""],
+                    ["value", "operator", "="],
+                    ["reference", "field", "three.one_id", ""],
+                    ["token", "close"],
+                    ["token", "where"],
+                    ["reference", "field", "two.field3", ""],
+                    ["value", "operator", "between"],
+                    ["value", "int", 2],
+                    ["token", "and"],
+                    ["value", "int", 3]
+                ],
+                [
+                    "one" => [
+                        "class" => "OneModel",
+                        "fields" => ["one_id", "field1", "field2"],
+                        "pk" => "one_id",
+                        "dontInclude" => true
+                    ],
+                    "two" => [
+                        "class" => "TwoModel",
+                        "fields" => ["id", "field3", "field4"]
+                    ]
+                    ,
+                    "three" => [
+                        "class" => "ThreeModel",
+                        "fields" => ["id", "field5", "field6"]
+                    ]
+                ],
+                "SELECT s.* FROM (" .
+                "SELECT " .
+                "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`one_id` AS `one__one_id`, " .
+                "`two`.`field3` AS `two__field3`, `two`.`field4` AS `two__field4`, `two`.`id` AS `two__id`, " .
+                "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id` " .
+                "FROM `one` " .
+                "LEFT JOIN `two` ON ( `one`.`one_id` = `two`.`one_id`) " .
+                "LEFT JOIN `three` ON (FALSE) " .
+                "WHERE `two`.`field3` BETWEEN :int_0 AND :int_1 " .
+                "UNION " .
+                "SELECT " .
+                "`one`.`field1` AS `one__field1`, `one`.`field2` AS `one__field2`, `one`.`one_id` AS `one__one_id`, " .
+                "NULL AS `two__field3`, NULL AS `two__field4`, NULL AS `two__id`, " .
+                "`three`.`field5` AS `three__field5`, `three`.`field6` AS `three__field6`, `three`.`id` AS `three__id` " .
+                "FROM `one` " .
+                "LEFT JOIN `two` ON ( `one`.`one_id` = `two`.`one_id`) " .
+                "LEFT JOIN `three` ON ( `one`.`one_id` = `three`.`one_id`) " .
+                "WHERE `two`.`field3` BETWEEN :int_0 AND :int_1" .
+                ") s ORDER BY COALESCE(`s`.`one__one_id`, 999999999999999999999999), COALESCE(`s`.`two__id`, 999999999999999999999999), COALESCE(`s`.`three__id`, 999999999999999999999999)"
+            ],
         ];
     }
 
