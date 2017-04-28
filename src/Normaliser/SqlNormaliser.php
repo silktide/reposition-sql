@@ -254,7 +254,11 @@ class SqlNormaliser implements NormaliserInterface
 
         if ($stepDataBackOne) {
             // rewind the data array by 1, so we don't skip any rows if this has been called recursively
-            prev($data);
+            if (prev($data) === false && is_null(key($data))) {
+                // prev has a nasty edge case where it won't rewind if you go past the end of the array
+                // so we detect this here and set $data to the last element
+                end($data);
+            }
         }
 
         // if this field set has been marked as a non-collection, return the first row of data or null
