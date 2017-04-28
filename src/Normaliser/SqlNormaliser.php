@@ -280,8 +280,13 @@ class SqlNormaliser implements NormaliserInterface
     {
         $rowValues = [];
         foreach ($fields as $field) {
-            if (!isset($row[$field])) {
+            if (!array_key_exists($field, $row)) {
                 throw new NormalisationException("Cannot denormalise data. The field '$field' doesn't exist in the result set, so we're unable to check when a new row is required");
+            }
+            if (is_null($row[$field])) {
+                // At least one parent row is null, meaning that this row belongs to a different relationship branch
+                // we need to return a value that will definitely not match any existing rowId
+                return "missing parent field";
             }
             $rowValues[] = $row[$field];
         }
