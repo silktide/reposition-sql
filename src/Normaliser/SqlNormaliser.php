@@ -186,7 +186,7 @@ class SqlNormaliser implements NormaliserInterface
 
         // failsafe to catch when there is no more data to process
         if (empty($row)) {
-            throw new NormalisationException("No more data exists. Entity: `$entityAlias`, Parent: `$parentAliases`");
+            throw new NormalisationException("No more data exists. Entity: `$entityAlias`, Parent: `" . implode(", ", $parentAliases) . "`");
         }
 
         $allNewRows = false;
