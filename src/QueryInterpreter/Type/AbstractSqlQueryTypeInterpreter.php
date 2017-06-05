@@ -242,7 +242,9 @@ abstract class AbstractSqlQueryTypeInterpreter
 
         while ($token = $this->query->getNextToken()) {
             if (in_array($token->getType(), ["sort", "limit"])) {
-                $groups[] = $currentItem;
+                if (!empty($currentItem)) {
+                    $groups[] = $currentItem;
+                }
                 break;
             }
             $currentItem .= $this->renderToken($token);
