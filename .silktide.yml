@@ -1,4 +1,6 @@
 ---
+app: reposition-sql
 type: library
 source: open
+language: php
 ...
