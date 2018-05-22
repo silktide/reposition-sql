@@ -55,25 +55,22 @@ class FindInterpreter extends AbstractSqlQueryTypeInterpreter
         // if we had no aggregate functions in the sequence, then this is a standard select query
         // so, we need to get the fields to return from the entity metadata for each
         if (empty($this->fields)) {
-            $metadata = $mainMetadata;
-            $collectionAlias = $mainCollection;
+            foreach ([[$mainCollection => $mainMetadata], $includes] as $includeList) {
+                foreach ($includeList as $collectionAlias => $metadata) {
+                    if (empty($metadata)) {
+                        continue;
+                    }
 
-            do {
-                if (empty($metadata)) {
-                    continue;
+                    // for each entity field, create an aliased SQL reference
+                    $entityFields = $metadata->getFieldNames();
+                    sort($entityFields);
+                    foreach ($entityFields as $field) {
+                        $field = $collectionAlias . "." . $field;
+                        $thisFieldAlias = $this->getSelectFieldAlias($field);
+                        $this->fields[$thisFieldAlias] = $this->renderArbitraryReference($field, $thisFieldAlias);
+                    }
                 }
-
-                // for each entity field, create an aliased SQL reference
-                $entityFields = $metadata->getFieldNames();
-                sort($entityFields);
-                foreach ($entityFields as $field) {
-                    $field = $collectionAlias . "." . $field;
-                    $thisFieldAlias = $this->getSelectFieldAlias($field);
-                    $this->fields[$thisFieldAlias] = $this->renderArbitraryReference($field, $thisFieldAlias);
-                }
-
-            } while (list($collectionAlias, $metadata) = each($includes));
-
+            }
         }
 
         if (empty($this->fields)) {
