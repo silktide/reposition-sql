@@ -50,7 +50,7 @@ class SqlQueryInterpreter implements QueryInterpreterInterface
      */
     protected $useSubstitution = true;
 
-    public function __construct(TokenParser $parser, array $queryTypeInterpreters, $identifierDelimiter)
+    public function __construct(TokenParser $parser, iterable $queryTypeInterpreters, $identifierDelimiter)
     {
         $this->tokenParser = $parser;
         $this->identifierDelimiter = $identifierDelimiter;
@@ -73,7 +73,7 @@ class SqlQueryInterpreter implements QueryInterpreterInterface
         $this->metadataProvider = $provider;
     }
 
-    public function setQueryTypeInterpreters(array $interpreters)
+    public function setQueryTypeInterpreters(iterable $interpreters)
     {
         $this->queryTypeInterpreters = [];
         foreach ($interpreters as $interpreter) {
